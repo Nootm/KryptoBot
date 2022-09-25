@@ -206,7 +206,7 @@ bool ImGui::InputTextWithHint(const char *label, const char *hint,
 							 &cb_user_data);
 }
 
-string GetSignature(string input) {
+string get_signature(string input) {
 	array<unsigned char, EVP_MAX_MD_SIZE> hash;
 	unsigned int hashLen;
 	HMAC(EVP_sha256(), bybit_secret.c_str(), static_cast<int>(36),
@@ -219,16 +219,6 @@ string GetSignature(string input) {
 		strcat(buf, tmp);
 	}
 	return string(buf);
-}
-
-Json::Value AttachSignature(Json::Value param) {
-	string input = "";
-	for (Json::Value::const_iterator it = param.begin(); it != param.end();
-		 ++it)
-		input += it.key().asString() + "=" + it->asString() + "&";
-	input = input.substr(0, input.length() - 1);
-	param["sign"] = GetSignature(input);
-	return param;
 }
 
 dataset srclose() {
@@ -436,7 +426,7 @@ CURLcode HttpGet_withauth(const string url, const string payload,
 	const string btime = system_timestamp();
 	headers = curl_slist_append(
 		headers, ("X-BAPI-SIGN: " +
-				  GetSignature(btime + bybit_key_x + "10000" + payload))
+				  get_signature(btime + bybit_key_x + "10000" + payload))
 					 .c_str());
 	headers =
 		curl_slist_append(headers, ("X-BAPI-API-KEY: " + bybit_key_x).c_str());
@@ -470,9 +460,9 @@ inline CURLcode HttpPost_withauth(const string &url, const Json::Value &data,
 	headers = curl_slist_append(headers, "X-BAPI-SIGN-TYPE: 2");
 	const string btime = system_timestamp();
 	headers = curl_slist_append(
-		headers,
-		("X-BAPI-SIGN: " + GetSignature(btime + bybit_key_x + "5000" + payload))
-			.c_str());
+		headers, ("X-BAPI-SIGN: " +
+				  get_signature(btime + bybit_key_x + "5000" + payload))
+					 .c_str());
 	headers =
 		curl_slist_append(headers, ("X-BAPI-API-KEY: " + bybit_key_x).c_str());
 	headers =
@@ -843,6 +833,7 @@ void imap_check() {
 	else
 		chk_imap = to_string(res);
 }
+
 void imap_fetch_uids(string &response) {
 	if (imap_endpoint.empty()) {
 		chk_imap = to_string(CURLE_FAILED_INIT);
@@ -903,7 +894,7 @@ void subs_order() {
 	param["args"][0] = bybit_key;
 	const string exptime = to_string(stoull(system_timestamp()) + 10000);
 	param["args"][1] = exptime;
-	param["args"][2] = GetSignature("GET/realtime" + exptime);
+	param["args"][2] = get_signature("GET/realtime" + exptime);
 	send_message(&client_priv, &connection_priv, param.toStyledString());
 	Json::Value param2;
 	param2["op"] = "subscribe";
@@ -1031,7 +1022,7 @@ void exec_trades(string rsignal) {
 	while (!tsignal.empty() && tsignal.find('_') != string::npos) {
 		tsignal = tsignal.substr(tsignal.find('_') + 1);
 		tradei = td[tsignal.substr(0, tsignal.find('_'))];
-		my_log.AddLog(("[INFO]" + tradei.typ).c_str());
+		my_log.AddLog(("[INFO] " + tradei.typ + "\n").c_str());
 		if (tradei.typ == "REMOVED")
 			continue;
 		if (tradei.typ == "Swing buy using same quantity") {
@@ -1290,7 +1281,7 @@ int main() {
 		if (!use_webhook) {
 			ImGui::InputTextWithHint("IMAP Endpoint", "imap.among.us",
 									 &imap_endpoint);
-			ImGui::InputTextWithHint("Mailbox Login", "sussy.baka@among.us",
+			ImGui::InputTextWithHint("Mailbox Login", "impostor@among.us",
 									 &mailbox_login);
 			ImGui::InputTextWithHint("Mailbox Password", "Pa55w0rt",
 									 &mailbox_password,
