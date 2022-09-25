@@ -92,12 +92,10 @@ struct kandle {
 struct tradeitem {
 	string typ = "", symbol = "";
 	float param = 0.0;
-	bool reduceonly = false;
 	tradeitem operator=(const tradeitem t2) {
 		typ = t2.typ;
 		symbol = t2.symbol;
 		param = t2.param;
-		reduceonly = t2.reduceonly;
 		return *this;
 	}
 };
