@@ -30,12 +30,14 @@
 #include <vector>
 #include <websocketpp/client.hpp>
 #include <websocketpp/config/asio_client.hpp>
+
 using namespace std;
 using Client = websocketpp::client<websocketpp::config::asio_tls_client>;
 using ConnectionHdl = websocketpp::connection_hdl;
 using SslContext = websocketpp::lib::asio::ssl::context;
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) &&                                 \
 	!defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
@@ -43,18 +45,32 @@ using websocketpp::lib::placeholders::_2;
 
 Client client, client_priv;
 ConnectionHdl connection, connection_priv;
-atomic_bool done = false, current_order_filled = false;
+atomic_bool done = false, current_order_filled = true;
 map<string, string> pric;
-map<string, bool> show;
+map<string, bool> tp, tac, show;
+map<string, atomic_bool> data_ok;
+vector<string> acts = {
+	"Swing buy using same quantity",
+	"Swing sell using same quantity",
+	"Buy using specified quantity",
+	"Sell using specified quantity",
+	"Close all positions",
+	"Buy using specified quantity, reduce only",
+	"Sell using specified quantity, reduce only",
+	"Buy using specified leverage times total available balance",
+	"Sell using specified leverage times total available balance"};
+int ac_current = 4, th_priv;
+vector<bool> ac_needparam = {false, false, true, true, false,
+							 true,	true,  true, true};
 bool rstat = false, use_heikin_ashi = false, connected_byb = false,
 	 webhook_use_ssl = false, webhook_listening = false;
 int use_endpoint = 2, use_webhook = 0;
-string bybit_key = "",
-	   bybit_secret = "",
+string bybit_key = "", bybit_secret = "",
 	   bybit_endpoint = "https://api-testnet.bybit.com",
 	   wss_endpoint = "wss://stream-testnet.bybit.com", chk_imap = "";
 typedef vector<float> dataset;
-string pairn, webhook_port = "80";
+string pairn, tsignal;
+int webhook_port = 80;
 struct kandle {
 	float o, h, l, c;
 	kandle &operator=(const kandle &k2) {
@@ -73,15 +89,51 @@ struct kandle {
 		return *this;
 	}
 };
+struct tradeitem {
+	string typ = "", symbol = "";
+	float param = 0.0;
+	bool reduceonly = false;
+	tradeitem operator=(const tradeitem t2) {
+		typ = t2.typ;
+		symbol = t2.symbol;
+		param = t2.param;
+		reduceonly = t2.reduceonly;
+		return *this;
+	}
+};
+
+tradeitem ttmp;
+vector<thread> threads;
+map<string, tradeitem> td;
 map<string, deque<kandle>> kq;
 map<string, map<bool, dataset>> macache;
 unordered_set<int> uidset;
 unordered_set<string> tv_ip;
-ImVec4 hexvec(string hex) {
-	int r, g, b;
-	sscanf(hex.c_str(), "%02x%02x%02x", &r, &g, &b);
-	return ImVec4(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
-}
+string chk_res;
+bool ws_ready = false;
+
+struct ExampleAppLog {
+	ImGuiTextBuffer Buf;
+	bool ScrollToBottom;
+
+	void Clear() { Buf.clear(); }
+
+	void AddLog(const char *str) {
+		Buf.append(str);
+		ScrollToBottom = true;
+	}
+
+	void Draw(const char *title, bool *p_opened = NULL) {
+		ImGui::Begin(title, p_opened);
+		ImGui::TextUnformatted(Buf.begin());
+		if (ScrollToBottom)
+			ImGui::SetScrollHereY(1.0f);
+		ScrollToBottom = false;
+		ImGui::End();
+	}
+};
+ExampleAppLog my_log;
+
 map<string, ImVec4> cols;
 auto endt = chrono::system_clock::now().time_since_epoch() / chrono::seconds(1);
 const vector<string> kival{"1",	  "3",	 "5",	"15", "30", "60", "120",
@@ -96,6 +148,12 @@ const vector<uint64_t> msval{
 	60000ULL * 720ULL,	86400000ULL,	   86400000ULL * 7ULL,
 	86400000ULL * 30ULL};
 int kinterval = 7;
+
+ImVec4 hexvec(string hex) {
+	int r, g, b;
+	sscanf(hex.c_str(), "%02x%02x%02x", &r, &g, &b);
+	return ImVec4(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+}
 
 struct InputTextCallback_UserData {
 	std::string *Str;
@@ -256,6 +314,7 @@ void on_message(Client *client, ConnectionHdl hdl,
 	Json::Value output;
 	reader.parse(msg->get_payload(), output);
 	const string prefixk = "kline.", prefixo = "user.order.unifiedAccount";
+
 	if (output.isMember("topic") &&
 		equal(prefixk.begin(), prefixk.end(),
 			  output["topic"].asString().begin()) &&
@@ -284,8 +343,10 @@ void on_message(Client *client, ConnectionHdl hdl,
 		endt = output["data"][0]["end"].asUInt64() / 1000;
 	} else if (output.isMember("topic") &&
 			   output["topic"].asString() == prefixo) {
-		if (output["data"]["result"][0]["orderStatus"].asString() == "Filled")
+		if (output["data"]["result"][0]["orderStatus"].asString() == "Filled") {
 			current_order_filled = true;
+			my_log.AddLog("[INFO] Order filled\n");
+		}
 	}
 }
 
@@ -330,24 +391,28 @@ size_t ReceiveData(void *contents, size_t size, size_t nmemb, void *stream) {
 	return size * nmemb;
 }
 
-CURLcode HttpGet(const string &url, string &response) {
-	CURLcode res;
+void HttpGet(const string url, string &response) {
 	CURL *curl = curl_easy_init();
-	struct curl_slist *headers = NULL;
-	headers = curl_slist_append(headers,
-								"Content-Type:application/json;charset=UTF-8");
-
 	if (curl == NULL) {
-		return CURLE_FAILED_INIT;
+		return;
 	}
-	curl_easy_setopt(curl, CURLOPT_NOPROXY, "127.0.0.1");
+	curl_easy_setopt(curl, CURLOPT_NOPROXY, "localhost");
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, ReceiveData);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
-
-	res = curl_easy_perform(curl);
+	curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
-	return res;
+	return;
+}
+
+string system_timestamp() {
+
+	chrono::time_point<chrono::system_clock, chrono::milliseconds> tp =
+		chrono::time_point_cast<chrono::milliseconds>(
+			chrono::system_clock::now());
+	auto tmp =
+		chrono::duration_cast<chrono::milliseconds>(tp.time_since_epoch());
+	return to_string(tmp.count());
 }
 
 string bybit_timestamp() {
@@ -361,13 +426,14 @@ string bybit_timestamp() {
 	return time_now.substr(0, dot) + time_now.substr(dot + 1, 3);
 }
 
-CURLcode HttpGet_withauth(const string url, const string payload, string btime,
+CURLcode HttpGet_withauth(const string url, const string payload,
 						  string &response) {
 	CURLcode res;
 	CURL *curl = curl_easy_init();
 	const string bybit_key_x = bybit_key.substr(0, 18);
 	struct curl_slist *headers = NULL;
 	headers = curl_slist_append(headers, "X-BAPI-SIGN-TYPE: 2");
+	const string btime = system_timestamp();
 	headers = curl_slist_append(
 		headers, ("X-BAPI-SIGN: " +
 				  GetSignature(btime + bybit_key_x + "10000" + payload))
@@ -377,11 +443,8 @@ CURLcode HttpGet_withauth(const string url, const string payload, string btime,
 	headers =
 		curl_slist_append(headers, ("X-BAPI-TIMESTAMP: " + btime).c_str());
 	headers = curl_slist_append(headers, "X-BAPI-RECV-WINDOW: 10000");
-	// headers = curl_slist_append(headers, "Content-Type:
-	// application/json");
-	if (curl == NULL) {
+	if (curl == NULL)
 		return CURLE_FAILED_INIT;
-	}
 	if (payload.empty())
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 	else
@@ -397,26 +460,25 @@ CURLcode HttpGet_withauth(const string url, const string payload, string btime,
 }
 
 inline CURLcode HttpPost_withauth(const string &url, const Json::Value &data,
-								  string btime, string &response) {
+								  string &response) {
 	Json::StreamWriterBuilder builder;
 	const string bybit_key_x = bybit_key.substr(0, 18);
-	builder["indentation"] = "";
 	const string payload = Json::writeString(builder, data);
 	CURLcode res;
 	CURL *curl = curl_easy_init();
 	struct curl_slist *headers = NULL;
 	headers = curl_slist_append(headers, "X-BAPI-SIGN-TYPE: 2");
+	const string btime = system_timestamp();
 	headers = curl_slist_append(
-		headers, ("X-BAPI-SIGN: " +
-				  GetSignature(btime + bybit_key_x + "10000" + payload))
-					 .c_str());
+		headers,
+		("X-BAPI-SIGN: " + GetSignature(btime + bybit_key_x + "5000" + payload))
+			.c_str());
 	headers =
 		curl_slist_append(headers, ("X-BAPI-API-KEY: " + bybit_key_x).c_str());
 	headers =
 		curl_slist_append(headers, ("X-BAPI-TIMESTAMP: " + btime).c_str());
-	headers = curl_slist_append(headers, "X-BAPI-RECV-WINDOW: 10000");
+	headers = curl_slist_append(headers, "X-BAPI-RECV-WINDOW: 5000");
 	headers = curl_slist_append(headers, "Content-Type:application/json");
-
 	if (curl == NULL) {
 		return CURLE_FAILED_INIT;
 	}
@@ -431,23 +493,22 @@ inline CURLcode HttpPost_withauth(const string &url, const Json::Value &data,
 	curl_slist_free_all(headers);
 	return res;
 }
-void bybit_order(string qty, bool buy) {
-	current_order_filled = false;
-	if (buy) {
 
-	} else {
-	}
-	return;
-}
 void keepalive() {
 	Json::Value param;
 	param["op"] = "ping";
 	const string opp = param.toStyledString();
+	string response = "";
+	Json::Reader reader;
+	Json::Value output;
 	while (!done) {
-		for (int i = 0; i < 20 && !done; ++i)
-			this_thread::sleep_for(chrono::seconds(1));
-		if (!done)
+		for (int i = 0; i < 200 && !done; ++i)
+			this_thread::sleep_for(chrono::milliseconds(100));
+		if (!done) {
 			send_message(&client, &connection, opp);
+			if (ws_ready)
+				send_message(&client_priv, &connection_priv, opp);
+		}
 	}
 	return;
 }
@@ -486,30 +547,33 @@ vector<string> syms;
 map<string, int> pricescale;
 float xtot = 120.0f, ysz = 160.0f, spacing = 1.0f;
 map<string, float> xsz;
-string imap_endpoint = "", mailbox_login = "",
-	   mailbox_password = "";
+string imap_endpoint = "", mailbox_login = "", mailbox_password = "";
 
 void inslabel(ImVec2 loc, string pcon, ImColor col, ImVec4 fcol) {
 	vl.push_back(label(loc, pcon, col, fcol));
 }
-
-void subs(string symbol) {
+void subs(string symbol, int kinterval) {
+	while (!data_ok[symbol])
+		this_thread::sleep_for(chrono::milliseconds(100));
+	data_ok[symbol] = false;
 	uint64_t ms = duration_cast<chrono::milliseconds>(
 					  chrono::system_clock::now().time_since_epoch())
 					  .count();
-	string response = "";
-	HttpGet(bybit_endpoint +
-				"/derivatives/v3/public/"
-				"kline?category=linear&symbol=" +
-				symbol + "&interval=" + kival[kinterval] +
-				"&start=" + to_string(ms - 200ULL * msval[kinterval]) +
-				"&end=" + to_string(ms),
-			response);
+
+	string rs = "",
+		   url = bybit_endpoint +
+				 "/derivatives/v3/public/"
+				 "kline?category=linear&symbol=" +
+				 symbol + "&interval=" + kival[kinterval] +
+				 "&start=" + to_string(ms - 200ULL * msval[kinterval]) +
+				 "&end=" + to_string(ms);
+	HttpGet(url, rs);
 	Json::Reader reader;
 	Json::Value output;
-	reader.parse(response, output);
+	reader.parse(rs, output);
 	output = output["result"]["list"];
 	kandle tk;
+	kq[symbol].clear();
 	for (int i = output.size() - 1; i >= 0; --i) {
 		tk.o = stof(output[i][1].asString());
 		tk.h = stof(output[i][2].asString());
@@ -521,11 +585,53 @@ void subs(string symbol) {
 	param["op"] = "subscribe";
 	param["args"][0] = "kline." + kival[kinterval] + "." + symbol;
 	send_message(&client, &connection, param.toStyledString());
+	data_ok[symbol] = true;
 }
-void unsub(string symbol) {
+void unsub(string symbol, int kinterval) {
+	while (!data_ok[symbol])
+		this_thread::sleep_for(chrono::milliseconds(100));
+	data_ok[symbol] = false;
 	kq[symbol].clear();
 	Json::Value param;
 	param["op"] = "unsubscribe";
+	param["args"][0] = "kline." + kival[kinterval] + "." + symbol;
+	send_message(&client, &connection, param.toStyledString());
+	data_ok[symbol] = true;
+}
+void unsubc(string symbol, int okival, int kinterval) {
+	Json::Value param;
+	param["op"] = "unsubscribe";
+	param["args"][0] = "kline." + kival[okival] + "." + symbol;
+	send_message(&client, &connection, param.toStyledString());
+	uint64_t ms = duration_cast<chrono::milliseconds>(
+					  chrono::system_clock::now().time_since_epoch())
+					  .count();
+	string rs = "",
+		   url = bybit_endpoint +
+				 "/derivatives/v3/public/"
+				 "kline?category=linear&symbol=" +
+				 symbol + "&interval=" + kival[kinterval] +
+				 "&start=" + to_string(ms - 200ULL * msval[kinterval]) +
+				 "&end=" + to_string(ms);
+	HttpGet(url, rs);
+	Json::Reader reader;
+	Json::Value output;
+	reader.parse(rs, output);
+	output = output["result"]["list"];
+	kandle tk;
+	while (!data_ok[symbol])
+		this_thread::sleep_for(chrono::milliseconds(100));
+	data_ok[symbol] = false;
+	kq[symbol].clear();
+	for (int i = output.size() - 1; i >= 0; --i) {
+		tk.o = stof(output[i][1].asString());
+		tk.h = stof(output[i][2].asString());
+		tk.l = stof(output[i][3].asString());
+		tk.c = stof(output[i][4].asString());
+		kq[symbol].push_back(tk);
+	}
+	data_ok[symbol] = true;
+	param["op"] = "subscribe";
 	param["args"][0] = "kline." + kival[kinterval] + "." + symbol;
 	send_message(&client, &connection, param.toStyledString());
 }
@@ -565,6 +671,8 @@ dataset mx(const dataset a, const dataset b) {
 }
 
 void drawsymbol(string symbol, float xsz, bool &rstat) {
+	while (!data_ok[symbol])
+		this_thread::sleep_for(chrono::milliseconds(100));
 	dataset c = use_heikin_ashi ? ohlc4() : srclose(),
 			o = use_heikin_ashi ? haopen() : sropen(),
 			h = use_heikin_ashi ? mx(mx(c, o), srhigh()) : srhigh(),
@@ -674,7 +782,7 @@ void drawsymbol(string symbol, float xsz, bool &rstat) {
 	}
 	for (label l : vl) {
 		l.loc.y -= 6.5;
-		l.loc.x += 1.0;
+		l.loc.x += 5.0;
 		if (l.loc.y - 0.2 < lasty)
 			l.loc.y += (lasty - (l.loc.y - 0.2));
 		ImGui::SetCursorScreenPos(l.loc);
@@ -690,13 +798,6 @@ void drawsymbol(string symbol, float xsz, bool &rstat) {
 	vl.clear();
 }
 
-void chgshow(string symbol) {
-	if (show[symbol])
-		subs(symbol);
-	else
-		unsub(symbol);
-}
-
 void getsyms() {
 	string response = "";
 	HttpGet(bybit_endpoint + "/v2/public/symbols", response);
@@ -705,8 +806,11 @@ void getsyms() {
 	reader.parse(response, output);
 	output = output["result"];
 	for (Json::Value i : output) {
-		if (i["quote_currency"].asString() == "USDT")
+		if (i["quote_currency"].asString() == "USDT") {
 			syms.emplace_back(i["name"].asString());
+			show[i["name"].asString()] = false;
+			data_ok[i["name"].asString()] = true;
+		}
 		pricescale[i["name"].asString()] = i["price_scale"].asInt();
 	}
 }
@@ -779,6 +883,7 @@ void imap_fetch_subj(int uid, string &response) {
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
 	curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
+	response = response.substr(response.find("Alert: ") + 7);
 }
 
 string parsesignal(string response) {
@@ -792,13 +897,11 @@ string parsesignal(string response) {
 	return ret;
 }
 
-string chk_res;
-
 void subs_order() {
 	Json::Value param;
 	param["op"] = "auth";
 	param["args"][0] = bybit_key;
-	const string exptime = to_string(stoull(bybit_timestamp()) + 10000);
+	const string exptime = to_string(stoull(system_timestamp()) + 10000);
 	param["args"][1] = exptime;
 	param["args"][2] = GetSignature("GET/realtime" + exptime);
 	send_message(&client_priv, &connection_priv, param.toStyledString());
@@ -809,12 +912,11 @@ void subs_order() {
 }
 
 void check_key() {
-	const string btime = bybit_timestamp(),
-				 url = bybit_endpoint +
-					   "/unified/v3/private/order/unfilled-orders";
+	const string url =
+		bybit_endpoint + "/unified/v3/private/order/unfilled-orders";
 	string response;
-	CURLcode res = HttpGet_withauth(url, "category=linear&symbol=BTCUSDT",
-									btime, response);
+	CURLcode res =
+		HttpGet_withauth(url, "category=linear&symbol=BTCUSDT", response);
 	if (res != CURLE_OK) {
 		fprintf(stderr, "Failed: %s\n", curl_easy_strerror(res));
 	}
@@ -822,38 +924,149 @@ void check_key() {
 	Json::Value output;
 	reader.parse(response, output);
 	chk_res = output["retMsg"].asString();
-	if (chk_res == "Success")
+	if (chk_res == "Success") {
+		turn_off_logging(client_priv);
+		client_priv.init_asio();
+		set_tls_init_handler(client_priv);
+		set_open_handler(client_priv, &connection_priv);
+		set_message_handler(client_priv);
+		set_url(client_priv, wss_endpoint + "/unified/private/v3");
+		my_log.AddLog(
+			"[INFO] Established a connection to private websocket endpoint\n");
+		threads.emplace_back(&Client::run, &client_priv);
+		th_priv = threads.size() - 1;
+		sleep(3);
+		ws_ready = true;
 		subs_order();
+	}
 	return;
 }
 
-string totalAvailableBalance() {
-	const string btime = bybit_timestamp(),
-				 url = bybit_endpoint +
-					   "/unified/v3/private/account/wallet/balance";
+float totalAvailableBalance() {
+	const string url =
+		bybit_endpoint + "/unified/v3/private/account/wallet/balance";
 	string response;
-	CURLcode res = HttpGet_withauth(url, "", btime, response);
+	CURLcode res = HttpGet_withauth(url, "", response);
 	if (res != CURLE_OK) {
 		fprintf(stderr, "Failed: %s\n", curl_easy_strerror(res));
 	}
 	Json::Reader reader;
 	Json::Value output;
 	reader.parse(response, output);
-	return output["result"]["totalAvailableBalance"].asString();
+	return stof(output["result"]["totalAvailableBalance"].asString());
 }
 
-void exec_trades(string tsignal) {
-	/*
-	SIMPLESWINGBUY, SIMPLESWINGSELL: swing with qty unchanged
-	CLOSEALL: close all positions
-	BUYL(leverage), SELLL(leverage): buy/sell with qty = account total
-	balance * leverage / trading pair price BUYQ(qty), SELLQ(qty): buy/sell
-	with qty = qty BUYS(size), SELLS(size): buy/sell with qty = size /
-	trading pair price
-	*/
-	// while (!tsignal.empty()) {
-	// 	exec_trades(sj.substr(sj.find("KRYPTOBOT_") + 10));
-	// }
+float current_price(string sym, string type) {
+	const string url =
+		bybit_endpoint +
+		"/derivatives/v3/public/tickers?category=linear&symbol=" + sym;
+	string response;
+	HttpGet(url, response);
+	Json::Reader reader;
+	Json::Value output;
+	reader.parse(response, output);
+	return stof(type == "Buy"
+					? output["result"]["list"][0]["askPrice"].asString()
+					: output["result"]["list"][0]["bidPrice"].asString());
+}
+
+float get_position(string symbol) {
+	const string url = bybit_endpoint + "/unified/v3/private/position/list";
+	string response;
+	CURLcode res =
+		HttpGet_withauth(url, "category=linear&symbol=" + symbol, response);
+	if (res != CURLE_OK)
+		fprintf(stderr, "Failed: %s\n", curl_easy_strerror(res));
+	Json::Reader reader;
+	Json::Value output;
+	reader.parse(response, output);
+	return stof(output["result"]["list"][0]["size"].asString());
+}
+
+string get_side(string symbol) {
+	const string url = bybit_endpoint + "/unified/v3/private/position/list";
+	string response;
+	CURLcode res =
+		HttpGet_withauth(url, "category=linear&symbol=" + symbol, response);
+	if (res != CURLE_OK)
+		fprintf(stderr, "Failed: %s\n", curl_easy_strerror(res));
+	Json::Reader reader;
+	Json::Value output;
+	reader.parse(response, output);
+	return output["result"]["list"][0]["side"].asString();
+}
+
+void market_order(string sym, string side, float qty, const bool reduce_only) {
+	current_order_filled = false;
+	char qtyc[64] = {0};
+	sprintf(qtyc, "%.3f", qty);
+	Json::Value param;
+	param["category"] = "linear";
+	param["orderType"] = "Market";
+	param["qty"] = string(qtyc);
+	param["reduceOnly"] = reduce_only;
+	param["side"] = side;
+	param["symbol"] = sym;
+	param["timeInForce"] = "GoodTillCancel";
+	string res = "";
+	HttpPost_withauth(bybit_endpoint + "/unified/v3/private/order/create",
+					  param, res);
+	for (const char &ch : res)
+		if (isdigit(ch)) {
+			if (ch != '0')
+				current_order_filled = true; // Bybit returned an error
+			break;
+		}
+	while (!current_order_filled)
+		this_thread::sleep_for(chrono::milliseconds(100));
+}
+
+void exec_trades(string rsignal) {
+	tradeitem tradei;
+	float posi;
+	string tsignal = "";
+	for (char c : rsignal)
+		if (isalpha(c) || isdigit(c) || c == '_')
+			tsignal += c;
+	while (!tsignal.empty() && tsignal.find('_') != string::npos) {
+		tsignal = tsignal.substr(tsignal.find('_') + 1);
+		tradei = td[tsignal.substr(0, tsignal.find('_'))];
+		my_log.AddLog(("[INFO]" + tradei.typ).c_str());
+		if (tradei.typ == "REMOVED")
+			continue;
+		if (tradei.typ == "Swing buy using same quantity") {
+			posi = get_position(tradei.symbol);
+			market_order(tradei.symbol, "Buy", posi, true);
+			market_order(tradei.symbol, "Buy", posi, false);
+		} else if (tradei.typ == "Swing sell using same quantity") {
+			posi = get_position(tradei.symbol);
+			market_order(tradei.symbol, "Sell", posi, true);
+			market_order(tradei.symbol, "Sell", posi, false);
+		} else if (tradei.typ == "Buy using specified quantity")
+			market_order(tradei.symbol, "Buy", tradei.param, false);
+		else if (tradei.typ == "Sell using specified quantity")
+			market_order(tradei.symbol, "Sell", tradei.param, false);
+		else if (tradei.typ == "Close all positions")
+			market_order(tradei.symbol,
+						 get_side(tradei.symbol) == "Sell" ? "Buy" : "Sell",
+						 get_position(tradei.symbol), true);
+		else if (tradei.typ == "Buy using specified quantity, reduce only")
+			market_order(tradei.symbol, "Buy", tradei.param, true);
+		else if (tradei.typ == "Sell using specified quantity, reduce only")
+			market_order(tradei.symbol, "Sell", tradei.param, true);
+		else if (tradei.typ == "Buy using specified leverage times total "
+							   "available balance")
+			market_order(tradei.symbol, "Buy",
+						 totalAvailableBalance() * tradei.param /
+							 current_price(tradei.symbol, "Buy"),
+						 false);
+		else if (tradei.typ == "Sell using specified leverage times total "
+							   "available balance")
+			market_order(tradei.symbol, "Sell",
+						 totalAvailableBalance() * tradei.param /
+							 current_price(tradei.symbol, "Sell"),
+						 false);
+	}
 	return;
 }
 
@@ -861,19 +1074,19 @@ void imap_thread_fuid() {
 	string uids = "", sj = "";
 	int uidn;
 	while (!done) {
-		for (int i = 0; i < 20 && !done; ++i)
-			this_thread::sleep_for(chrono::seconds(1));
+		for (int i = 0; i < 250 && !done; ++i)
+			this_thread::sleep_for(chrono::milliseconds(100));
 		if (done)
 			return;
 		imap_fetch_uids(uids);
-		for (size_t i = 0; i < uids.size(); ++i) {
+		for (size_t i = 0; i < uids.size() && !done; ++i) {
 			uidn = 0;
 			while (isdigit(uids[i]))
 				uidn = uidn * 10 + (uids[i++] & 15);
-			if (uidn && !uidset.count(uidn)) {
+			if (uidn && !uidset.count(uidn) && !done) {
 				uidset.insert(uidn);
 				imap_fetch_subj(uidn, sj);
-				exec_trades(sj.substr(sj.find("KRYPTOBOT_") + 10));
+				exec_trades(sj);
 			}
 		}
 	}
@@ -894,34 +1107,29 @@ void start_webhook() {
 			if (!tv_ip.count(req.remote_ip_address))
 				return crow::response(crow::status::BAD_REQUEST);
 			const string sj = req.body;
-			exec_trades(sj.substr(sj.find("KRYPTOBOT_") + 10));
+			exec_trades(sj);
 			return crow::response(200);
 		});
 	CROW_ROUTE(app, "/test")
 	([]() { return "Success"; });
 	app.loglevel(crow::LogLevel::Warning);
-	if (webhook_use_ssl)
-		app.port(stoi(webhook_port))
-			.ssl_file("cert/cert.crt", "cert/cert.key")
-			.multithreaded()
-			.run();
-	else
-		app.port(stoi(webhook_port)).multithreaded().run();
+	if (webhook_use_ssl) {
+		ifstream if_cert("cert/cert.crt");
+		ifstream if_key("cert/cert.key");
+		if (if_cert.good() && if_key.good())
+			app.port(webhook_port)
+				.ssl_file("cert/cert.crt", "cert/cert.key")
+				.multithreaded()
+				.run();
+		else
+			my_log.AddLog("[WARN] TLS certificate and/or key not found!\n");
+		if_cert.close();
+		if_key.close();
+	} else
+		app.port(webhook_port).multithreaded().run();
 }
 
-int main(int argc, char *argv[]) {
-	turn_off_logging(client);
-	client.init_asio();
-	set_tls_init_handler(client);
-	set_open_handler(client, &connection);
-	set_message_handler(client);
-
-	turn_off_logging(client_priv);
-	client_priv.init_asio();
-	set_tls_init_handler(client_priv);
-	set_open_handler(client_priv, &connection_priv);
-	set_message_handler(client_priv);
-
+int main() {
 	cols["green"] = hexvec("8AFF80");
 	cols["red"] = hexvec("ff6c6b");
 	cols["purple"] = hexvec("a9a1e1");
@@ -967,19 +1175,22 @@ int main(int argc, char *argv[]) {
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, cols["black"]);
 
 	rstat = true;
-	getsyms();
 	io.Fonts->AddFontFromFileTTF("JetBrainsMono-Regular.ttf", 15);
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
+	if (abs(stoll(bybit_timestamp()) - stoll(system_timestamp())) > 1000) {
+		my_log.AddLog(
+			"[WARN] System time is out of sync with Bybit server time!\n");
+	}
 	while (!glfwWindowShouldClose(window) && !done && !connected_byb) {
 		glfwPollEvents();
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+		my_log.Draw("Logs");
 		ImGui::Begin("Preferences", &rstat);
 		ImGui::Text("Please choose an endpoint.");
-		if (ImGui::RadioButton("Mainnet (bybit.com)", &use_endpoint, 0) ||
-			ImGui::RadioButton("Mainnet (bytick.com)", &use_endpoint, 1) ||
+		if (ImGui::RadioButton("Mainnet (api.bybit.com)", &use_endpoint, 0) ||
+			ImGui::RadioButton("Mainnet (api.bytick.com)", &use_endpoint, 1) ||
 			ImGui::RadioButton("Testnet", &use_endpoint, 2)) {
 			switch (use_endpoint) {
 			case 0:
@@ -995,6 +1206,7 @@ int main(int argc, char *argv[]) {
 				wss_endpoint = "wss://stream-testnet.bybit.com";
 				break;
 			}
+			// https://bybit-exchange.github.io/docs/derivativesV3/unified_margin/#t-authentication
 		}
 		if (ImGui::Button("Connect"))
 			connected_byb = true;
@@ -1012,21 +1224,31 @@ int main(int argc, char *argv[]) {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		glfwSwapBuffers(window);
 	}
+	getsyms();
+	glfwPollEvents();
+	turn_off_logging(client);
+	client.init_asio();
+	set_tls_init_handler(client);
+	set_open_handler(client, &connection);
+	set_message_handler(client);
 	set_url(client, wss_endpoint + "/contract/usdt/public/v3");
+	my_log.AddLog(
+		"[INFO] Established a connection to public websocket endpoint\n");
+	glfwPollEvents();
 	static websocketpp::lib::thread t1(&Client::run, &client);
-	set_url(client_priv, wss_endpoint + "/unified/private/v3");
-	static websocketpp::lib::thread tp1(&Client::run, &client_priv);
-	vector<thread *> threads;
-
 	static thread t2(&keepalive);
 	bool established_imap = false;
 	string webhook_res = "";
+	ttmp.symbol = "ETHUSDT";
+	tp[ttmp.symbol] = true;
+	ttmp.typ = "Close all positions";
+	tac[ttmp.typ] = true;
 	while (!glfwWindowShouldClose(window) && !done) {
 		glfwPollEvents();
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		ImGui::ShowDemoWindow();
+		my_log.Draw("title");
 		ImGui::Begin("Preferences", &rstat);
 		if (chk_res == "Success")
 			ImGui::BeginDisabled();
@@ -1038,7 +1260,8 @@ int main(int argc, char *argv[]) {
 			ImGui::EndDisabled();
 		if (chk_res != "Success" && ImGui::Button("Check API key and secret")) {
 			chk_res = "...";
-			threads.emplace_back(new thread(check_key));
+			my_log.AddLog("[INFO] Checking API key and secret\n");
+			threads.emplace_back(check_key);
 		}
 
 		if (!chk_res.empty()) {
@@ -1057,7 +1280,7 @@ int main(int argc, char *argv[]) {
 		if (!use_webhook && chk_imap == "Success") {
 			if (!established_imap) {
 				established_imap = true;
-				threads.emplace_back(new thread(imap_thread_fuid));
+				threads.emplace_back(imap_thread_fuid);
 			}
 			ImGui::BeginDisabled();
 		}
@@ -1065,16 +1288,16 @@ int main(int argc, char *argv[]) {
 		ImGui::SameLine();
 		ImGui::RadioButton("Webhook", &use_webhook, 1);
 		if (!use_webhook) {
-			ImGui::InputTextWithHint("IMAP Endpoint", "imap.example.com",
+			ImGui::InputTextWithHint("IMAP Endpoint", "imap.among.us",
 									 &imap_endpoint);
-			ImGui::InputTextWithHint("Mailbox Login", "john@example.com",
+			ImGui::InputTextWithHint("Mailbox Login", "sussy.baka@among.us",
 									 &mailbox_login);
-			ImGui::InputTextWithHint("Mailbox Password", "Jima114514",
+			ImGui::InputTextWithHint("Mailbox Password", "Pa55w0rt",
 									 &mailbox_password,
 									 ImGuiInputTextFlags_Password);
 			if (ImGui::Button("Check Mailbox")) {
 				chk_imap = "...";
-				threads.emplace_back(new thread(imap_check));
+				threads.emplace_back(imap_check);
 			}
 			if (chk_imap == "Success")
 				ImGui::EndDisabled();
@@ -1092,7 +1315,8 @@ int main(int argc, char *argv[]) {
 		} else {
 			if (webhook_listening)
 				ImGui::BeginDisabled();
-			ImGui::InputText("Port", &webhook_port);
+
+			ImGui::InputInt("Port", &webhook_port);
 			ImGui::Checkbox("Use TLS Encryption", &webhook_use_ssl);
 			if (webhook_use_ssl)
 				ImGui::Text("Please put certificate files under cert/, names "
@@ -1101,56 +1325,107 @@ int main(int argc, char *argv[]) {
 				ImGui::EndDisabled();
 			if (ImGui::Button("Start Webhook") && !webhook_listening) {
 				webhook_listening = true;
-				threads.emplace_back(new thread(start_webhook));
+				threads.emplace_back(start_webhook);
 			}
 			if (webhook_listening) {
 				if (ImGui::Button("Test Webhook")) {
 					webhook_res = "";
 					HttpGet(string(webhook_use_ssl ? "https://" : "http://") +
-								"127.0.0.1:" + webhook_port + "/test",
+								"localhost:" + to_string(webhook_port) +
+								"/test",
 							webhook_res);
 				}
 				ImGui::SameLine();
 				if (ImGui::Button("Stop Webhook")) {
 					webhook_listening = false;
-					app.port(stoi(webhook_port)).multithreaded().stop();
+					app.port(webhook_port).multithreaded().stop();
 				}
 				ImGui::Text("%s", webhook_res.c_str());
 			}
 		}
 		ImGui::Separator();
-		if (ImGui::BeginListBox("Add Symbol")) {
+		ImGui::Text("Trading rules:");
+		ImGui::Text("When receive KRYPTOBOT_");
+		ImGui::SameLine();
+		ImGui::InputTextWithHint("##", "PleaseBuySomeEthereum", &tsignal);
+		if (ImGui::BeginCombo("do", ttmp.typ.c_str())) {
+			for (int i = 0; i < acts.size(); ++i)
+				if (ImGui::Selectable(acts[i].c_str(), tac[acts[i]]) &&
+					ttmp.typ != acts[i]) {
+					tac[ttmp.typ] = false;
+					tac[acts[i]] = true;
+					ttmp.typ = acts[i];
+					if (!ac_needparam[i])
+						ttmp.param = 0.0;
+					ac_current = i;
+				}
+			ImGui::EndCombo();
+		}
+		ImGui::Text("on");
+		ImGui::SameLine();
+		if (ImGui::BeginCombo("trading Pair,", ttmp.symbol.c_str())) {
+			for (int i = 0; i < syms.size(); ++i)
+				if (ImGui::Selectable(syms[i].c_str(), tp[syms[i]]) &&
+					ttmp.symbol != syms[i]) {
+					tp[ttmp.symbol] = false;
+					tp[syms[i]] = true;
+					ttmp.symbol = syms[i];
+				}
+			ImGui::EndCombo();
+		}
+		if (ac_needparam[ac_current])
+			ImGui::InputFloat("Parameter", &ttmp.param, 1.0, 1.0, "%.2f");
+		if (ImGui::Button("Add rule"))
+			td[tsignal] = ttmp;
+		for (map<string, tradeitem>::iterator it = td.begin(); it != td.end();
+			 ++it) {
+			if (it->second.typ == "REMOVED")
+				continue;
+			if (it->second.param != 0.0)
+				ImGui::TextWrapped(
+					"KRYPTOBOT_%s: %s on pair %s with parameter %.2f",
+					it->first.c_str(), it->second.typ.c_str(),
+					it->second.symbol.c_str(), it->second.param);
+			else
+				ImGui::TextWrapped("KRYPTOBOT_%s: %s on pair %s",
+								   it->first.c_str(), it->second.typ.c_str(),
+								   it->second.symbol.c_str());
+			ImGui::SameLine();
+			if (ImGui::Button("-"))
+				it->second.typ = "REMOVED";
+		}
+		ImGui::Separator();
+		ImGui::Text("Graphs:");
+		if (ImGui::BeginCombo("Add Symbol", "ETH")) {
 			for (int i = 0; i < syms.size(); ++i) {
 				if (ImGui::Selectable(
 						syms[i].substr(0, syms[i].size() - 4).c_str(),
 						show[syms[i]])) {
 					show[syms[i]] ^= 1;
-					chgshow(syms[i]);
 					xsz[syms[i]] = 12.0f;
+					if (show[syms[i]])
+						threads.emplace_back(subs, syms[i], kinterval);
+					else
+						threads.emplace_back(unsub, syms[i], kinterval);
 				}
 			}
-			ImGui::EndListBox();
+			ImGui::EndCombo();
 		}
 		const int okival = kinterval;
-		ImGui::Separator();
 		if (ImGui::BeginCombo("Time Interval", kiusr[kinterval].c_str())) {
 			for (int i = 0; i < kival.size(); ++i) {
 				const bool isSelected = (kinterval == i);
 				if (ImGui::Selectable(kiusr[i].c_str(), isSelected)) {
 					kinterval = i;
-					const int nkival = kinterval;
 					for (map<string, bool>::const_iterator it = show.begin();
 						 it != show.end(); ++it)
 						if (it->second) {
-							kinterval = okival;
-							unsub(it->first);
-							kinterval = nkival;
-							subs(it->first);
+							threads.emplace_back(unsubc, it->first, okival,
+												 kinterval);
 						}
 				}
-				if (isSelected) {
+				if (isSelected)
 					ImGui::SetItemDefaultFocus();
-				}
 			}
 			ImGui::EndCombo();
 		}
@@ -1158,7 +1433,7 @@ int main(int argc, char *argv[]) {
 		ImGui::End();
 		for (map<string, bool>::const_iterator it = show.begin();
 			 it != show.end(); ++it)
-			if (it->second) {
+			if (it->second && data_ok[it->first]) {
 				pairn = it->first;
 				ImGui::SetNextWindowSize(ImVec2(200.0f, 150.0f),
 										 ImGuiCond_FirstUseEver);
@@ -1172,6 +1447,8 @@ int main(int argc, char *argv[]) {
 				drawsymbol(pairn, xsz[pairn], rstat);
 				ImGui::EndChild();
 				ImGui::End();
+				if (!show[pairn])
+					threads.emplace_back(unsub, pairn, kinterval);
 			}
 		if (!rstat)
 			done = true;
@@ -1187,20 +1464,22 @@ int main(int argc, char *argv[]) {
 		glfwSwapBuffers(window);
 	}
 	done = true;
-	app.port(stoi(webhook_port)).multithreaded().stop();
-	for (size_t i = 0; i < threads.size(); ++i) {
-		threads[i]->join();
-		delete threads[i];
-	}
-	t2.join();
-	close_connection(&client, &connection);
-	t1.join();
-	close_connection(&client_priv, &connection_priv);
-	tp1.join();
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 	glfwDestroyWindow(window);
 	glfwTerminate();
+	if (webhook_listening)
+		app.port(webhook_port).multithreaded().stop();
+	t2.join();
+	close_connection(&client, &connection);
+	t1.join();
+	close_connection(&client_priv, &connection_priv);
+	threads[th_priv].join();
+	for (size_t i = 0; i < threads.size(); ++i) {
+		if (i != th_priv) {
+			threads[i].join();
+		}
+	}
 	return 0;
 }
