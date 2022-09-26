@@ -23,3 +23,15 @@ jobs:
         sudo ln -s /usr/include/jsoncpp/json/ /usr/include/json
     - name: make
       run: make
+
+    - name: Archive gui binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: kryptobot_gui
+        path: main.out
+          
+    - name: Archive headless binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: kryptobot_headless
+        path: headless.out
