@@ -1165,7 +1165,6 @@ int main() {
 
 	rstat = true;
 	io.Fonts->AddFontFromFileTTF("JetBrainsMono-Regular.ttf", 15);
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	if (abs(stoll(bybit_timestamp()) - stoll(system_timestamp())) > 1000) {
 		my_log.AddLog(
 			"[WARN] System time is out of sync with Bybit server time!\n");
