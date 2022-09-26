@@ -1,29 +1,28 @@
 # KryptoBot
-
-English | [正體中文](https://github.com/Nootm/KryptoBot/README_ZHT.md)
+[English](https://github.com/Nootm/KryptoBot/README.md) | 正體中文
 
 ![Interface](https://raw.githubusercontent.com/Nootm/KryptoBot/master/gui.jpg)
 
-> Because I need somewhere to run my shitty strategy.
+> 因爲我需要找個地方運行我的爛交易策略。
 
-Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://wundertrading.com/en).
+KryptoBot 是用於 TradingView 和 Bybit 的交易機器人，就像 [WunderTrading](https://wundertrading.com/zh)
 
-> Disclaimer: I am not responsible for any of your losses using this program. This project is still in early stages, so do test it using [Bybit Testnet](https://testnet.bybit.com/en-US/) for at least a week before using it.
+> 聲明：我不對任何因使用此程序造成的損失負責。項目仍在早期開發中，請先使用 [Bybit 測試網](https://testnet.bybit.com/zh-TW/) 測試至少一週後再使用。
 
-## Features:
-- Fully self-hosted.
-- Easy to set up with either an existing email account (webhook mode) or a public IP address (mailbox mode).
-- Don't rely on 3rd party services, only connections with Bybit and the specified SMTP server (if you use mailbox mode) would be made.
-- GUI mode and headless mode provided.
-- I don't have a Windows rig to test, so run it on VPS or [a virtual machine with Linux](https://itsfoss.com/install-linux-in-virtualbox/) if you use Windows.
+## 功能:
+- 可完全自己搭建。
+- 配置簡單，你只需要一個電子信箱或公網 IP。
+- 不依賴第三方服務，只會連接 Bybit 和用戶提供的 SMTP 伺服器（如果使用信箱模式）。
+- 提供 GUI 模式和進程模式。
+- 我沒有運行 Windows 的機器進行測試，所以如果你使用 Windows，請在伺服器上運行或使用 [Linux 虛擬機](https://forum.gamer.com.tw/C.php?bsn=8897&snA=90925)。
 
-## Tested on:
+##在這些系統下通過測試：
 - Alpine Linux 3.16.2, x86_64, headless
 - Arch Linux Latest, AArch64, Sway
 - Arch Linux Latest, x86_64, Sway
 - macOS 12.6, AArch64
 
-## Using GUI mode
+## 使用 GUI 模式
 - 第一個窗口依次爲：主網接口 1，主網接口 2，測試網接口。
 - 確認後第二個窗口，第一部分：Bybit API 的 key 以及 secret（從 bybit 獲取），填好後點下面按鈕檢查。
 - 第二部分：依次爲郵箱模式和 webhook 模式。郵箱模式：依次爲 IMAP url（請搜索你的郵件服務 + IMAP，如 mailbox.org 即爲 imap.mailbox.org), 郵箱帳號，郵箱密碼。webhook 模式：綁定端口，是否啓用 TLS（若啓用，TLS 證書放在 cert 目錄下，命名爲 cert.crt 和 cert.key）。
