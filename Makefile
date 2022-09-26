@@ -13,7 +13,7 @@ LINUX_GL_LIBS = -lGL
 CXXFLAGS = -std=c++20 -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
 CXXFLAGS += -g -Wall -Wformat
 CXXFLAGS += -DCROW_ENABLE_SSL -D_WEBSOCKETPP_CPP11_STL_ -lcrypto -lcurl -ljsoncpp -lssl -lpthread -Wall
-CXXFLAGS += -Ofast -march=native -mtune=native
+CXXFLAGS += -Ofast
 # LIBS =
 
 ##---------------------------------------------------------------------
