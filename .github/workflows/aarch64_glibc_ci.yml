@@ -14,9 +14,9 @@ jobs:
         arch: aarch64
         distro: archarm_latest
         run: |
-          sudo pacman -Syuu --noconfirm
-          sudo pacman -S --noconfirm jsoncpp clang websocketpp glfw-wayland curl
-          sudo pacman -S --noconfirm --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
+          pacman -Syuu --noconfirm
+          pacman -S --noconfirm jsoncpp clang websocketpp glfw-wayland curl
+          pacman -S --noconfirm --needed git base-devel && git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si
           wget https://github.com/ocornut/imgui/archive/refs/tags/v1.88.tar.gz
           tar xf v1.88.tar.gz
           mv imgui-1.88 imgui
