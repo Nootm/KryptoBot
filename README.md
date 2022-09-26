@@ -1,5 +1,5 @@
 # KryptoBot
-[English](https://github.com/Nootm/KryptoBot/README.md) | [正體中文](https://github.com/Nootm/KryptoBot/README_ZHT.md)
+English | [正體中文](https://github.com/Nootm/KryptoBot/README_ZHT.md)
 
 Trading bot to be used with TradingView and Bybit, like WunderTrading.
 # Features:
