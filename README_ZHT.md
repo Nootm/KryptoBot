@@ -1,5 +1,5 @@
 # KryptoBot
-[English](https://github.com/Nootm/KryptoBot/README.md) | 正體中文
+[English](https://github.com/Nootm/KryptoBot) | 正體中文
 
 ![Interface](https://raw.githubusercontent.com/Nootm/KryptoBot/master/gui.jpg)
 
@@ -16,7 +16,7 @@ KryptoBot 是用於 TradingView 和 Bybit 的交易機器人，就像 [WunderTra
 - 提供 GUI 模式和進程模式。
 - 我沒有運行 Windows 的機器進行測試，所以如果你使用 Windows，請在伺服器上運行或使用 [Linux 虛擬機](https://forum.gamer.com.tw/C.php?bsn=8897&snA=90925)。
 
-##在這些系統下通過測試：
+## 在這些系統下通過測試：
 - Alpine Linux 3.16.2, x86_64, headless
 - Arch Linux Latest, AArch64, Sway
 - Arch Linux Latest, x86_64, Sway
