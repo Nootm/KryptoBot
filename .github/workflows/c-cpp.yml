@@ -17,6 +17,6 @@ jobs:
         wget https://github.com/ocornut/imgui/archive/refs/tags/v1.88.tar.gz
         tar xf v1.88.tar.gz
         mv imgui-1.88 imgui
-        sudo apt-get install libjsoncpp-dev clang libwebsocketpp-dev
+        sudo apt-get install libjsoncpp-dev clang libwebsocketpp-dev libglfw3-dev
     - name: make
       run: make
