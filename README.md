@@ -11,11 +11,11 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 > Disclaimer: I am not responsible for any of your losses using this program. This project is still in early stages, so do test it with [Bybit Testnet](https://testnet.bybit.com/en-US/) for at least a week before using it for production.
 
 ## Features:
-- Fully self-hosted.
+- Fully self-hosted. Auditable binaries produced by GitHub Actions.
 - Easy to set up with either an existing email account (webhook mode) or a public IP address (mailbox mode).
 - Don't rely on 3rd party services, only connections with Bybit and the specified SMTP server (if you use mailbox mode) would be made.
 - GUI mode and headless mode provided.
-- I don't have a Windows rig to test, so please run it on VPS or [a virtual machine with Linux](https://itsfoss.com/install-linux-in-virtualbox/) if you use Windows. It will also protect your strategy from potential malwares. However, if someone is willing to build and test it for Windows with GitHub Action, please open an issue and I will put the link here.
+- I don't have a Windows rig to test, so please run it on VPS or [a virtual machine with Linux](https://itsfoss.com/install-linux-in-virtualbox/) if you use Windows. It will also protect your strategy from potential malwares. However, if someone is willing to build and test it for Windows with GitHub Action, you can open an issue and I will put the link here.
 
 ## Tested on:
 - Alpine Linux 3.16.2, x86_64, headless
