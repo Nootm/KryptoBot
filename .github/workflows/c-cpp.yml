@@ -17,6 +17,8 @@ jobs:
         wget https://github.com/ocornut/imgui/archive/refs/tags/v1.88.tar.gz
         tar xf v1.88.tar.gz
         mv imgui-1.88 imgui
-        sudo apt-get install libjsoncpp-dev clang libwebsocketpp-dev libglfw3-dev
+        wget https://github.com/CrowCpp/Crow/releases/download/v1.0%2B5/crow-v1.0+5.deb
+        sudo apt install -y ./crow-v1.0+5.deb
+        sudo apt install -y libjsoncpp-dev clang libwebsocketpp-dev libglfw3-dev libimgui-dev
     - name: make
       run: make
