@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     - name: Install tools
@@ -17,7 +17,7 @@ jobs:
         wget https://github.com/ocornut/imgui/archive/refs/tags/v1.88.tar.gz
         tar xf v1.88.tar.gz
         mv imgui-1.88 imgui
-        sudo apt-get install libjsoncpp-dev clang libcurl-dev libwebsocketpp-dev
+        sudo apt-get install libjsoncpp-dev clang libwebsocketpp-dev
     - name: configure
       run: ./configure
     - name: make
