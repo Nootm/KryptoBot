@@ -19,9 +19,7 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 
 ## Tested on
 - Alpine Linux 3.16.2, x86_64, headless
-- Arch Linux Latest, AArch64, Sway
 - Arch Linux Latest, x86_64, Sway
-- macOS 12.6, AArch64
 
 ## Using GUI mode
 - After you chose an endpoint and confirmed, put the API key and secret provided by Bybit into the first two boxes and click on check.
