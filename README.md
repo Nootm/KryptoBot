@@ -1,6 +1,6 @@
 # KryptoBot
 
-English | [正體中文](https://github.com/Nootm/KryptoBot/README_ZHT.md)
+English | [正體中文](https://github.com/Nootm/KryptoBot/blob/main/README_ZHT.md)
 
 ![Interface](https://raw.githubusercontent.com/Nootm/KryptoBot/master/gui.jpg)
 
