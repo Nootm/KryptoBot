@@ -38,11 +38,6 @@ using SslContext = websocketpp::lib::asio::ssl::context;
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1900) &&                                 \
-	!defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
-#pragma comment(lib, "legacy_stdio_definitions")
-#endif
-
 Client client, client_priv;
 ConnectionHdl connection, connection_priv;
 atomic_bool done = false, current_order_filled = true;
@@ -59,7 +54,7 @@ vector<string> acts = {
 	"Sell using specified quantity, reduce only",
 	"Buy using specified leverage times total available balance",
 	"Sell using specified leverage times total available balance"};
-int ac_current = 4, th_priv;
+int ac_current = 4, th_priv = -1;
 vector<bool> ac_needparam = {false, false, true, true, false,
 							 true,	true,  true, true};
 bool rstat = false, use_heikin_ashi = false, connected_byb = false,
@@ -1462,12 +1457,12 @@ int main() {
 	t2.join();
 	close_connection(&client, &connection);
 	t1.join();
-	close_connection(&client_priv, &connection_priv);
-	threads[th_priv].join();
-	for (size_t i = 0; i < threads.size(); ++i) {
-		if (i != th_priv) {
-			threads[i].join();
-		}
+	if (th_priv != -1) {
+		close_connection(&client_priv, &connection_priv);
+		threads[th_priv].join();
 	}
+	for (size_t i = 0; i < threads.size(); ++i)
+		if (i != th_priv)
+			threads[i].join();
 	return 0;
 }
