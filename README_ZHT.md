@@ -9,18 +9,16 @@ KryptoBot 是用於 TradingView 和 Bybit 的交易機器人，就像 [WunderTra
 
 > 聲明：我不對任何因使用此程序造成的損失負責。項目仍在早期開發中，請先使用 [Bybit 測試網](https://testnet.bybit.com/zh-TW/) 測試至少一週後再使用。
 
-## 功能:
+## 功能
 - 可完全自己搭建。
 - 配置簡單，你只需要一個電子信箱或公網 IP。
 - 不依賴第三方服務，只會連接 Bybit 和用戶提供的 SMTP 伺服器（如果使用信箱模式）。
 - 提供 GUI 模式和進程模式。
 - 我沒有運行 Windows 的機器進行測試，所以如果你使用 Windows，請在伺服器上運行或使用 [Linux 虛擬機](https://forum.gamer.com.tw/C.php?bsn=8897&snA=90925)。
 
-## 在這些系統下通過測試：
+## 在這些系統下通過測試
 - Alpine Linux 3.16.2, x86_64, headless
-- Arch Linux Latest, AArch64, Sway
 - Arch Linux Latest, x86_64, Sway
-- macOS 12.6, AArch64
 
 ## 使用 GUI 模式
 - 第一個窗口依次爲：主網接口 1，主網接口 2，測試網接口。
