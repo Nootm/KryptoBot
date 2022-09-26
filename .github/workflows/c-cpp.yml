@@ -19,6 +19,6 @@ jobs:
         mv imgui-1.88 imgui
         wget https://github.com/CrowCpp/Crow/releases/download/v1.0%2B5/crow-v1.0+5.deb
         sudo apt install -y ./crow-v1.0+5.deb
-        sudo apt install -y libjsoncpp-dev clang libwebsocketpp-dev libglfw3-dev libimgui-dev
+        sudo apt install -y libjsoncpp-dev clang libwebsocketpp-dev libglfw3-dev libimgui-dev libboost-dev
     - name: make
       run: make
