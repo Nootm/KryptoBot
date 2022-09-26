@@ -24,8 +24,11 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 - macOS 12.6, AArch64
 
 ## Using GUI mode
-- 第一個窗口依次爲：主網接口 1，主網接口 2，測試網接口。
-- 確認後第二個窗口，第一部分：Bybit API 的 key 以及 secret（從 bybit 獲取），填好後點下面按鈕檢查。
-- 第二部分：依次爲郵箱模式和 webhook 模式。郵箱模式：依次爲 IMAP url（請搜索你的郵件服務 + IMAP，如 mailbox.org 即爲 imap.mailbox.org), 郵箱帳號，郵箱密碼。webhook 模式：綁定端口，是否啓用 TLS（若啓用，TLS 證書放在 cert 目錄下，命名爲 cert.crt 和 cert.key）。
-- 第三部分：定義規則。依次填入：TradingView 發出訊號（僅支持大小寫字母和數字），操作內容，交易對，參數（某些操作內容需要）。請參考下方例子。寫好一條之後點 “Add rule”
-- 第四部分：簡單的 K 線圖。依次爲選擇交易對（可多選），切換時間間隔，是否使用 Helkin-Ashi K 線。
+- After you chose an endpoint and confirmed, put the API key and secret provided by Bybit into the first two boxes and click on check.
+- The second section lets you choose between mailbox mode and webhook mode. For mailbox mode, you'll need to type in the IMAP url (you can search for "your email provider name + IMAP server address"), username and password. For webhook mode select the port to listen on. If you're using TLS, put the certificate and key on cert/cert.crt and cert/cert.key.
+- On the third section you can define the rules. See the examples below.
+- The fourth section gives you a simple candlestick graph.
+
+## Examples of rules
+
+## Setting up TradingView
