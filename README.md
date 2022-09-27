@@ -19,7 +19,7 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 - Easy to set up with either an existing email account (webhook mode) or a public IP address (mailbox mode).
 - Don't rely on 3rd party services, only connections with Bybit and the specified SMTP server (if you use mailbox mode) would be made.
 - GUI mode and headless mode provided.
-- I don't have a Windows rig to test, so please run it on VPS or [a virtual machine with Linux](https://itsfoss.com/install-linux-in-virtualbox/) if you use Windows. It will also protect your strategy from potential malwares. However, if someone is willing to build and test it for Windows with GitHub Action, you can open an issue and I will put the link here.
+- I don't have a Windows rig to test, so please run it on VPS or [a virtual machine with Linux](https://itsfoss.com/install-linux-in-virtualbox/) if you use Windows. It will also protect your strategy from potential malwares. I use BuyVM, and recommand it as long as you use crypto to pay. However, if someone is willing to build and test it for Windows with GitHub Action, you can open an issue and I will put the link here.
 
 ## Tested on
 - Alpine Linux 3.16.2, x86_64, headless
@@ -101,6 +101,15 @@ Here's an example in headless mode using webhook mode:
         }
     ]
 }
+```
+
+You can use the following types:
+```plain
+"Swing buy using same quantity", "Swing sell using same quantity"
+"Buy using specified quantity", "Sell using specified quantity" (arg: quantity, in trading coin)
+"Close all positions"
+"Buy using specified quantity, reduce only", "Sell using specified quantity, reduce only" (arg: quantity, in trading coin)
+"Buy using specified leverage times total equity", "Sell using specified leverage times total equity" (arg: leverage, please set allowed leverage at the Bybit trading panel a bit higher than the value put here or order may fail)
 ```
 
 For mailbox mode, replace these lines:
