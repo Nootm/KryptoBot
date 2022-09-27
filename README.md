@@ -33,7 +33,7 @@ Signals are parts from the message sent by TradingView. It should only contain a
 
 For setting up TradingView, you may check this article from WunderTrading first: https://help.wundertrading.com/en/articles/5173846-tradingview-strategy-alert-automation. The main difference is, for mailbox mode you need to select "Send email-to-SMS" in "more options" instead of Webhook URL, and for webhook mode you would fill in the url box with your own server address.
 
-Here's an example in headless mode:
+Here's an example in headless mode using webhook mode:
 ```json
 {
     "http_url": "https://api.bybit.com",
@@ -97,6 +97,18 @@ Here's an example in headless mode:
         }
     ]
 }
+For mailbox mode, replace these lines:
+```
+    "mode": "webhook",
+    "webhook_port": 443,
+    "webhook_use_ssl": true,
+```
+with:
+```
+    "smtp_url": "imap.example.com",
+    "smtp_login": "impostor@among.us",
+    "smtp_password": "Pa55w0rt",
+```
 ```
 In TradingView:
 ```
