@@ -47,16 +47,15 @@ using websocketpp::lib::placeholders::_2;
 Client client, client_priv;
 ConnectionHdl connection, connection_priv;
 atomic_bool done = false, current_order_filled = true;
-vector<string> acts = {
-	"Swing buy using same quantity",
-	"Swing sell using same quantity",
-	"Buy using specified quantity",
-	"Sell using specified quantity",
-	"Close all positions",
-	"Buy using specified quantity, reduce only",
-	"Sell using specified quantity, reduce only",
-	"Buy using specified leverage times total available balance",
-	"Sell using specified leverage times total available balance"};
+vector<string> acts = {"Swing buy using same quantity",
+					   "Swing sell using same quantity",
+					   "Buy using specified quantity",
+					   "Sell using specified quantity",
+					   "Close all positions",
+					   "Buy using specified quantity, reduce only",
+					   "Sell using specified quantity, reduce only",
+					   "Buy using specified leverage times total equity",
+					   "Sell using specified leverage times total equity"};
 int th_priv;
 vector<bool> ac_needparam = {false, false, true, true, false,
 							 true,	true,  true, true};
@@ -428,11 +427,12 @@ void check_key() {
 		sleep(3);
 		ws_ready = true;
 		subs_order();
-	}
+	} else
+		cerr << "[WARN] " << chk_res << endl;
 	return;
 }
 
-float totalAvailableBalance() {
+float totalEquity() {
 	const string url =
 		bybit_endpoint + "/unified/v3/private/account/wallet/balance";
 	string response;
@@ -443,7 +443,7 @@ float totalAvailableBalance() {
 	Json::Reader reader;
 	Json::Value output;
 	reader.parse(response, output);
-	return stof(output["result"]["totalAvailableBalance"].asString());
+	return stof(output["result"]["totalEquity"].asString());
 }
 
 float current_price(string sym, string type) {
@@ -545,15 +545,15 @@ void exec_trades(string rsignal) {
 		else if (tradei.typ == "Sell using specified quantity, reduce only")
 			market_order(tradei.symbol, "Sell", tradei.param, true);
 		else if (tradei.typ == "Buy using specified leverage times total "
-							   "available balance")
+							   "equity")
 			market_order(tradei.symbol, "Buy",
-						 totalAvailableBalance() * tradei.param /
+						 totalEquity() * tradei.param /
 							 current_price(tradei.symbol, "Buy"),
 						 false);
 		else if (tradei.typ == "Sell using specified leverage times total "
-							   "available balance")
+							   "equity")
 			market_order(tradei.symbol, "Sell",
-						 totalAvailableBalance() * tradei.param /
+						 totalEquity() * tradei.param /
 							 current_price(tradei.symbol, "Sell"),
 						 false);
 	}
@@ -642,6 +642,7 @@ int main() {
 		 << endl;
 	static websocketpp::lib::thread t1(&Client::run, &client);
 	static thread t2(&keepalive);
+	check_key();
 	for (Json::Value i : conf["rules"]) {
 		ttmp.typ = i["type"].asString();
 		ttmp.symbol = i["pair"].asString();
