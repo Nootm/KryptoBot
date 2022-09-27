@@ -44,16 +44,15 @@ atomic_bool done = false, current_order_filled = true;
 map<string, string> pric;
 map<string, bool> tp, tac, show;
 map<string, atomic_bool> data_ok;
-vector<string> acts = {
-	"Swing buy using same quantity",
-	"Swing sell using same quantity",
-	"Buy using specified quantity",
-	"Sell using specified quantity",
-	"Close all positions",
-	"Buy using specified quantity, reduce only",
-	"Sell using specified quantity, reduce only",
-	"Buy using specified leverage times total available balance",
-	"Sell using specified leverage times total available balance"};
+vector<string> acts = {"Swing buy using same quantity",
+					   "Swing sell using same quantity",
+					   "Buy using specified quantity",
+					   "Sell using specified quantity",
+					   "Close all positions",
+					   "Buy using specified quantity, reduce only",
+					   "Sell using specified quantity, reduce only",
+					   "Buy using specified leverage times total equity",
+					   "Sell using specified leverage times total equity"};
 int ac_current = 4, th_priv = -1;
 vector<bool> ac_needparam = {false, false, true, true, false,
 							 true,	true,  true, true};
@@ -926,7 +925,7 @@ void check_key() {
 	return;
 }
 
-float totalAvailableBalance() {
+float totalEquity() {
 	const string url =
 		bybit_endpoint + "/unified/v3/private/account/wallet/balance";
 	string response;
@@ -937,7 +936,7 @@ float totalAvailableBalance() {
 	Json::Reader reader;
 	Json::Value output;
 	reader.parse(response, output);
-	return stof(output["result"]["totalAvailableBalance"].asString());
+	return stof(output["result"]["totalEquity"].asString());
 }
 
 float current_price(string sym, string type) {
@@ -1039,15 +1038,15 @@ void exec_trades(string rsignal) {
 		else if (tradei.typ == "Sell using specified quantity, reduce only")
 			market_order(tradei.symbol, "Sell", tradei.param, true);
 		else if (tradei.typ == "Buy using specified leverage times total "
-							   "available balance")
+							   "equity")
 			market_order(tradei.symbol, "Buy",
-						 totalAvailableBalance() * tradei.param /
+						 totalEquity() * tradei.param /
 							 current_price(tradei.symbol, "Buy"),
 						 false);
 		else if (tradei.typ == "Sell using specified leverage times total "
-							   "available balance")
+							   "equity")
 			market_order(tradei.symbol, "Sell",
-						 totalAvailableBalance() * tradei.param /
+						 totalEquity() * tradei.param /
 							 current_price(tradei.symbol, "Sell"),
 						 false);
 	}
