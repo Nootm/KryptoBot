@@ -1,6 +1,6 @@
 # KryptoBot
 
-English | [正體中文](https://github.com/Nootm/KryptoBot/blob/main/README_ZHT.md)
+English | [正體中文](https://github.com/Nootm/KryptoBot/blob/main/README_ZHT.md) | [簡體中文](https://github.com/Nootm/KryptoBot/blob/main/README_zh_Hans.md)
 
 ![madewithc++](https://img.shields.io/badge/made%20with-c%2B%2B-informational?style=for-the-badge)
 ![workinprogress](https://img.shields.io/badge/work-in%20progress-critical?style=for-the-badge)
@@ -10,9 +10,9 @@ English | [正體中文](https://github.com/Nootm/KryptoBot/blob/main/README_ZHT
 
 > Because I need somewhere to run my shitty strategy.
 
-Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://wundertrading.com/en).
+Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://wundertrading.com/en). This project is still in early stages; do except bugs and random crashes.
 
-> Disclaimer: I am not responsible for any of your losses using this program. This project is still in early stages, so do test it with [Bybit Testnet](https://testnet.bybit.com/en-US/) for at least a week before using it for production.
+> Disclaimer: I am not responsible for any of your losses using this program. Do test it with [Bybit Testnet](https://testnet.bybit.com/en-US/) for at least a week before using it for production.
 
 ## Features
 - Fully self-hosted. Auditable binaries produced by GitHub Actions.
