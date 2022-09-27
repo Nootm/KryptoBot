@@ -18,9 +18,7 @@ KryptoBot 是用於 TradingView 和 Bybit 的交易機器人，就像 [WunderTra
 
 ## 在這些系統下通過測試：
 - Alpine Linux 3.16.2, x86_64, headless
-- Arch Linux Latest, AArch64, Sway
 - Arch Linux Latest, x86_64, Sway
-- macOS 12.6, AArch64
 
 ## 使用 GUI 模式
 - 第一個窗口依次爲：主網接口 1，主網接口 2，測試網接口。
