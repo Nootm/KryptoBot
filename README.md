@@ -32,3 +32,77 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 Signals are parts from the message sent by TradingView. It should only contain alphanumberic charactors. KryptoBot retrives message from TradingView in the format of "KRYPTOBOT_DoSomething1_Action2_XDDD", and it would execute the corresponding action triggered by signal "DoSomething1", "Action2" and "XDDD". KryptoBot will always wait for the previous order to be completely filled before executing the next. It's recommanded to always send one message at a time, and put all the signals inside this message.
 
 For setting up TradingView, you may check this article from WunderTrading first: https://help.wundertrading.com/en/articles/5173846-tradingview-strategy-alert-automation. The main difference is, for mailbox mode you need to select "Send email-to-SMS" in "more options" instead of Webhook URL, and for webhook mode you would fill in the url box with your own server address.
+
+Here's an example in headless mode:
+```json
+{
+    "http_url": "https://api.bybit.com",
+    "ws_url": "wss://stream.bybit.com",
+    "key": "xxxxx",
+    "secret": "xxxxxxxxxx",
+    "mode": "webhook",
+    "webhook_port": 443,
+    "webhook_use_ssl": true,
+    "rules": [
+        {
+            "signal": "CA",
+            "pair": "APEUSDT",
+            "type": "Close all positions"
+        },
+        {
+            "signal": "CM",
+            "pair": "MATICUSDT",
+            "type": "Close all positions"
+        },
+        {
+            "signal": "CR",
+            "pair": "RUNEUSDT",
+            "type": "Close all positions"
+        },
+        {
+            "signal": "BA",
+            "pair": "APEUSDT",
+            "type": "Buy using specified leverage times total equity",
+            "arg": 1.0
+        },
+        {
+            "signal": "BM",
+            "pair": "MATICUSDT",
+            "type": "Buy using specified leverage times total equity",
+            "arg": 1.0
+        },
+        {
+            "signal": "BR",
+            "pair": "RUNEUSDT",
+            "type": "Buy using specified leverage times total equity",
+            "arg": 1.0
+        },
+        {
+            "signal": "SA",
+            "pair": "APEUSDT",
+            "type": "Sell using specified leverage times total equity",
+            "arg": 1.0
+        },
+        {
+            "signal": "SM",
+            "pair": "MATICUSDT",
+            "type": "Sell using specified leverage times total equity",
+            "arg": 1.0
+        },
+        {
+            "signal": "SR",
+            "pair": "RUNEUSDT",
+            "type": "Sell using specified leverage times total equity",
+            "arg": 1.0
+        }
+    ]
+}
+```
+In TradingView:
+```
+if condition_long
+    strategy.entry("KRYPTOBOT_CA_CM_CR_BA_BM_BR", strategy.long)
+else if condition_short
+    strategy.entry("KRYPTOBOT_CA_CM_CR_SA_SM_SR", strategy.short)
+```
+This will result in 3x leverage evenly distributed in APEUSDT, MATICUSDT and RUNEUSDT.
