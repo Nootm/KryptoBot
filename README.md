@@ -130,7 +130,7 @@ with:
 
 In TradingView:
 
-```javascript
+```python3
 if condition_long
     strategy.entry("KRYPTOBOT_CA_CM_CR_BA_BM_BR", strategy.long)
 else if condition_short
