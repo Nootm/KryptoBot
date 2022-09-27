@@ -114,7 +114,7 @@ You can use the following types:
 
 For mailbox mode, replace these lines:
 
-```
+```json
     "mode": "webhook",
     "webhook_port": 443,
     "webhook_use_ssl": true,
@@ -122,7 +122,7 @@ For mailbox mode, replace these lines:
 
 with:
 
-```
+```json
     "smtp_url": "imap.example.com",
     "smtp_login": "impostor@among.us",
     "smtp_password": "Pa55w0rt",
@@ -130,7 +130,7 @@ with:
 
 In TradingView:
 
-```
+```javascript
 if condition_long
     strategy.entry("KRYPTOBOT_CA_CM_CR_BA_BM_BR", strategy.long)
 else if condition_short
