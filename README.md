@@ -1,7 +1,11 @@
 # KryptoBot
 
 English | [正體中文](https://github.com/Nootm/KryptoBot/blob/main/README_ZHT.md)
+
 [![forthebadge](https://forthebadge.com/images/badges/made-with-c-plus-plus.svg)](https://forthebadge.com)
+[![forthebadge](https://forthebadge.com/images/badges/0-percent-optimized.svg)](https://forthebadge.com)
+[![forthebadge](https://forthebadge.com/images/badges/works-on-my-machine.svg)](https://forthebadge.com)
+
 ![Interface](https://raw.githubusercontent.com/Nootm/KryptoBot/master/gui.jpg)
 
 > Because I need somewhere to run my shitty strategy.
