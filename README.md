@@ -2,7 +2,7 @@
 
 English | [正體中文](https://github.com/Nootm/KryptoBot/blob/main/README_ZHT.md)
 
-![madewithc++](https://img.shields.io/badge/made%20with-c%2B%2B-red?style=for-the-badge)
+![madewithc++](https://img.shields.io/badge/made%20with-c%2B%2B-informational?style=for-the-badge)
 ![workinprogress](https://img.shields.io/badge/work-in%20progress-critical?style=for-the-badge)
 ![kindaworks](https://img.shields.io/badge/kinda-works-success?style=for-the-badge)
 
