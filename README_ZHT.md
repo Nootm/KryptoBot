@@ -1,6 +1,10 @@
 # KryptoBot
 [English](https://github.com/Nootm/KryptoBot) | 正體中文
 
+![madewithc++](https://img.shields.io/badge/使用-C%2B%2B-informational?style=for-the-badge)
+![workinprogress](https://img.shields.io/badge/開發-進行中-critical?style=for-the-badge)
+![kindaworks](https://img.shields.io/badge/應該-能用-success?style=for-the-badge)
+
 ![Interface](https://raw.githubusercontent.com/Nootm/KryptoBot/master/gui.jpg)
 
 > 因爲我需要找個地方運行我的爛交易策略。
