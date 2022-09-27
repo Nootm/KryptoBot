@@ -2,9 +2,8 @@
 
 English | [正體中文](https://github.com/Nootm/KryptoBot/blob/main/README_ZHT.md)
 
-[![forthebadge](https://forthebadge.com/images/badges/made-with-c-plus-plus.svg)](https://forthebadge.com){:height="50px"}
-[![forthebadge](https://forthebadge.com/images/badges/powered-by-black-magic.svg)](https://forthebadge.com){:height="50px"}
-[![forthebadge](https://forthebadge.com/images/badges/works-on-my-machine.svg)](https://forthebadge.com){:height="50px"}
+![madewithc++](https://img.shields.io/badge/made%20with-c%2B%2B-red?style=for-the-badge)
+![kindaworks](https://img.shields.io/badge/kinda-works-success?style=for-the-badge)
 
 ![Interface](https://raw.githubusercontent.com/Nootm/KryptoBot/master/gui.jpg)
 
