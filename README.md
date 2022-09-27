@@ -35,7 +35,11 @@ Only unified margin (v3) is supported for now.
 
 ## Examples of rules and TradingView setups
 
-Signals are parts from the message sent by TradingView. It should only contain alphanumberic charactors. KryptoBot retrives message from TradingView in the format of "KRYPTOBOT_DoSomething1_Action2_XDDD", and it would execute the corresponding action triggered by signal "DoSomething1", "Action2" and "XDDD". KryptoBot will always wait for the previous order to be completely filled before executing the next. It's recommanded to always send one message at a time, and put all the signals inside this message.
+Signals are parts from the message sent by TradingView. It should only contain alphanumberic charactors. KryptoBot retrives message from TradingView in the form of "KRYPTOBOT_DoSomething1_DoSomething2_DoSomething3", and it would execute the corresponding action triggered by signal "DoSomething1", "DoSomething2" and "DoSomething3". You may set something like this:
+
+![ruleexample](https://raw.githubusercontent.com/Nootm/KryptoBot/master/rule_example.jpg)
+
+KryptoBot will always wait for the previous order to be completely filled before executing the next. It's recommanded to always send one message at a time, and put all the signals inside this message.
 
 For setting up TradingView, you may check this article from WunderTrading first: https://help.wundertrading.com/en/articles/5173846-tradingview-strategy-alert-automation. The main difference is, for mailbox mode you need to select "Send email-to-SMS" in "more options" instead of Webhook URL, and for webhook mode you would fill in the url box with your own server address.
 
