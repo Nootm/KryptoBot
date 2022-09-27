@@ -10,7 +10,7 @@ English | [正體中文](https://github.com/Nootm/KryptoBot/blob/main/README_ZHT
 
 > Because I need somewhere to run my shitty strategy.
 
-Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://wundertrading.com/en). KryptoBot is still in its early stages; do expect bugs, crashes and messy codes.
+Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://wundertrading.com/en). This project is still in early stages; do except bugs and random crashes.
 
 > Disclaimer: I am not responsible for any of your losses using this program. Do test it with [Bybit Testnet](https://testnet.bybit.com/en-US/) for at least a week before using it for production.
 
@@ -25,6 +25,8 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 - Alpine Linux 3.16.2, x86_64, headless
 - Arch Linux Latest, x86_64, Sway
 
+Only unified margin (v3) is supported for now.
+
 ## Using GUI mode
 - After you chose an endpoint and confirmed, put the API key and secret provided by Bybit into the first two boxes and click on check.
 - The second section lets you choose between mailbox mode and webhook mode. For mailbox mode, you'll need to type in the IMAP url (you can search for "your email provider name + IMAP server address"), username and password. For webhook mode select the port to listen on. If you're using TLS, put the certificate and key on cert/cert.crt and cert/cert.key.
@@ -33,7 +35,11 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 
 ## Examples of rules and TradingView setups
 
-Signals are parts from the message sent by TradingView. It should only contain alphanumberic charactors. KryptoBot retrives message from TradingView in the format of "KRYPTOBOT_DoSomething1_Action2_XDDD", and it would execute the corresponding action triggered by signal "DoSomething1", "Action2" and "XDDD". KryptoBot will always wait for the previous order to be completely filled before executing the next. It's recommanded to always send one message at a time, and put all the signals inside this message.
+Signals are parts from the message sent by TradingView. It should only contain alphanumberic charactors. KryptoBot retrives message from TradingView in the form of "KRYPTOBOT_DoSomething1_DoSomething2_DoSomething3", and it would execute the corresponding action triggered by signal "DoSomething1", "DoSomething2" and "DoSomething3". You may set something like this:
+
+![ruleexample](https://raw.githubusercontent.com/Nootm/KryptoBot/master/rule_example.jpg)
+
+KryptoBot will always wait for the previous order to be completely filled before executing the next. It's recommanded to always send one message at a time, and put all the signals inside this message.
 
 For setting up TradingView, you may check this article from WunderTrading first: https://help.wundertrading.com/en/articles/5173846-tradingview-strategy-alert-automation. The main difference is, for mailbox mode you need to select "Send email-to-SMS" in "more options" instead of Webhook URL, and for webhook mode you would fill in the url box with your own server address.
 
