@@ -38,28 +38,22 @@ using SslContext = websocketpp::lib::asio::ssl::context;
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1900) &&                                 \
-	!defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
-#pragma comment(lib, "legacy_stdio_definitions")
-#endif
-
 Client client, client_priv;
 ConnectionHdl connection, connection_priv;
 atomic_bool done = false, current_order_filled = true;
 map<string, string> pric;
 map<string, bool> tp, tac, show;
 map<string, atomic_bool> data_ok;
-vector<string> acts = {
-	"Swing buy using same quantity",
-	"Swing sell using same quantity",
-	"Buy using specified quantity",
-	"Sell using specified quantity",
-	"Close all positions",
-	"Buy using specified quantity, reduce only",
-	"Sell using specified quantity, reduce only",
-	"Buy using specified leverage times total available balance",
-	"Sell using specified leverage times total available balance"};
-int ac_current = 4, th_priv;
+vector<string> acts = {"Swing buy using same quantity",
+					   "Swing sell using same quantity",
+					   "Buy using specified quantity",
+					   "Sell using specified quantity",
+					   "Close all positions",
+					   "Buy using specified quantity, reduce only",
+					   "Sell using specified quantity, reduce only",
+					   "Buy using specified leverage times total equity",
+					   "Sell using specified leverage times total equity"};
+int ac_current = 4, th_priv = -1;
 vector<bool> ac_needparam = {false, false, true, true, false,
 							 true,	true,  true, true};
 bool rstat = false, use_heikin_ashi = false, connected_byb = false,
@@ -931,7 +925,7 @@ void check_key() {
 	return;
 }
 
-float totalAvailableBalance() {
+float totalEquity() {
 	const string url =
 		bybit_endpoint + "/unified/v3/private/account/wallet/balance";
 	string response;
@@ -942,7 +936,7 @@ float totalAvailableBalance() {
 	Json::Reader reader;
 	Json::Value output;
 	reader.parse(response, output);
-	return stof(output["result"]["totalAvailableBalance"].asString());
+	return stof(output["result"]["totalEquity"].asString());
 }
 
 float current_price(string sym, string type) {
@@ -1044,15 +1038,15 @@ void exec_trades(string rsignal) {
 		else if (tradei.typ == "Sell using specified quantity, reduce only")
 			market_order(tradei.symbol, "Sell", tradei.param, true);
 		else if (tradei.typ == "Buy using specified leverage times total "
-							   "available balance")
+							   "equity")
 			market_order(tradei.symbol, "Buy",
-						 totalAvailableBalance() * tradei.param /
+						 totalEquity() * tradei.param /
 							 current_price(tradei.symbol, "Buy"),
 						 false);
 		else if (tradei.typ == "Sell using specified leverage times total "
-							   "available balance")
+							   "equity")
 			market_order(tradei.symbol, "Sell",
-						 totalAvailableBalance() * tradei.param /
+						 totalEquity() * tradei.param /
 							 current_price(tradei.symbol, "Sell"),
 						 false);
 	}
@@ -1462,12 +1456,12 @@ int main() {
 	t2.join();
 	close_connection(&client, &connection);
 	t1.join();
-	close_connection(&client_priv, &connection_priv);
-	threads[th_priv].join();
-	for (size_t i = 0; i < threads.size(); ++i) {
-		if (i != th_priv) {
-			threads[i].join();
-		}
+	if (th_priv != -1) {
+		close_connection(&client_priv, &connection_priv);
+		threads[th_priv].join();
 	}
+	for (size_t i = 0; i < threads.size(); ++i)
+		if (i != th_priv)
+			threads[i].join();
 	return 0;
 }
