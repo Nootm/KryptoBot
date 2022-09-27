@@ -29,7 +29,7 @@ KryptoBot 是与 TradingView 和 Bybit 配合工作的交易机器人，与项�
 
 ## 规则示例以及 TradingView 配置
 
-KryptoBot 利用 TradingView 发送的消息的部分作为交易信号。这些消息必须仅由字母和数字组成。KryptoBot 以格式 "KRYPTOBOT_DoSomething1_Action2_XDDD" 从 TradingView 接收消息，然后由交易信号指定的操作内容"DoSomething1"、交易对"Action2"以及参数"XDDD"执行指定的操作。KryptoBot 会等待之前的交易委托完成后才会进行下一个交易委托。当您需要执行多个操作时，我们建议一次仅向 KryptoBot 发送一条信息，并在此消息中包含所有的交易信号。
+KryptoBot 利用 TradingView 发送的消息的部分作为交易信号。这些消息必须仅由字母和数字组成。KryptoBot 以格式 "KRYPTOBOT_DoSomething1_DoSomething2_DoSomething3" 从 TradingView 接收消息，然后由交易信号 "DoSomething1"、"DoSomething2"、"DoSomething3"执行指定的操作。KryptoBot 会等待之前的交易委托完成后才会进行下一个交易委托。当您需要执行多个操作时，我们建议一次仅向 KryptoBot 发送一条信息，并在此消息中包含所有的交易信号。
 
 您可以通过阅读来自 WunderTrading 的文章：https://help.wundertrading.com/en/articles/5173846-tradingview-strategy-alert-automation 来设置 TradingView。不同之处是：对于 mailbox 模式，您需要在"more options"中选择"Send email-to-SMS"选项；对于 webhook 模式，您需要填写您自己的服务器地址。
 
