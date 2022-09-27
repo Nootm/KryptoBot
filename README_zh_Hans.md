@@ -2,6 +2,8 @@
 
 [English](https://github.com/Nootm/KryptoBot/blob/main/README.md) | [正體中文](https://github.com/Nootm/KryptoBot/blob/main/README_ZHT.md) | 简体中文
 
+下面都是[朋友寫的](https://github.com/hiDandelion)，和我沒有關聯。~~目前沒有加拿大置產的打算~~
+
 ![Interface](https://raw.githubusercontent.com/Nootm/KryptoBot/master/gui.jpg)
 
 > 或许是因为我想在加拿大盖豪宅？
