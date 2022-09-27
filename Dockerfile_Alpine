@@ -1,0 +1,6 @@
+FROM alpine:edge
+
+COPY main.cpp /main.cpp
+COPY main_headless.cpp /main_headless.cpp
+
+ENTRYPOINT ["/build_alpine.sh"]
