@@ -97,24 +97,31 @@ Here's an example in headless mode using webhook mode:
         }
     ]
 }
+```
+
 For mailbox mode, replace these lines:
+
 ```
     "mode": "webhook",
     "webhook_port": 443,
     "webhook_use_ssl": true,
 ```
+
 with:
+
 ```
     "smtp_url": "imap.example.com",
     "smtp_login": "impostor@among.us",
     "smtp_password": "Pa55w0rt",
 ```
-```
+
 In TradingView:
+
 ```
 if condition_long
     strategy.entry("KRYPTOBOT_CA_CM_CR_BA_BM_BR", strategy.long)
 else if condition_short
     strategy.entry("KRYPTOBOT_CA_CM_CR_SA_SM_SR", strategy.short)
 ```
+
 This will result in 3x leverage evenly distributed in APEUSDT, MATICUSDT and RUNEUSDT.
