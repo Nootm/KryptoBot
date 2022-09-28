@@ -10,17 +10,18 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-    - name: build
-      uses: ./arch-linux-docker-action/
-
-    - name: Archive gui binary
-      uses: actions/upload-artifact@v3
-      with:
-        name: kryptobot_gui
-        path: main.out
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: build
+        uses: ./arch-linux-docker-action/
+      - name: Archive gui binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: kryptobot_gui
+          path: main.out
           
-    - name: Archive headless binary
-      uses: actions/upload-artifact@v3
-      with:
-        name: kryptobot_headless
-        path: headless.out
+      - name: Archive headless binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: kryptobot_headless
+          path: headless.out
