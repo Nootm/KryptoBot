@@ -1,0 +1,26 @@
+name: Linux CI
+
+on:
+  push:
+    branches: [ "main", "staging"]
+  pull_request:
+    branches: [ "main", "staging"]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/arch-linux-docker-action@v1
+    - name: build
+
+    - name: Archive gui binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: kryptobot_gui
+        path: main.out
+          
+    - name: Archive headless binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: kryptobot_headless
+        path: headless.out
