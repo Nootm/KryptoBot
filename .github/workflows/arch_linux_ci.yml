@@ -1,10 +1,10 @@
-name: Linux CI
+name: Arch Linux
 
 on:
   push:
-    branches: [ "main", "staging"]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main", "staging"]
+    branches: [ "main" ]
 
 jobs:
   build:
