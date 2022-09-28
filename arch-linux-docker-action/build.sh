@@ -1,3 +1,5 @@
+#!/bin/sh -l
+
 pacman --noconfirm -Sy
 pacman --noconfirm -S base-devel git boost glfw-wayland cmake clang wget
 git clone https://aur.archlinux.org/yay.git
