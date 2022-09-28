@@ -10,8 +10,8 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/arch-linux-docker-action@v1
     - name: build
+      uses: actions/arch-linux-docker-action@v1
 
     - name: Archive gui binary
       uses: actions/upload-artifact@v3
