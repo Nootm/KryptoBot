@@ -1,5 +1,5 @@
 FROM archlinux:latest
 
-COPY build_archlinux.sh /build_archlinux.sh
+COPY build.sh /build.sh
 
-ENTRYPOINT ["/build_archlinux.sh"]
+ENTRYPOINT ["/build.sh"]
