@@ -27,3 +27,4 @@ wget https://github.com/ocornut/imgui/archive/refs/tags/v1.88.tar.gz
 tar xf v1.88.tar.gz
 mv imgui-1.88 imgui
 make
+cp ./*.out /github/workspace/
