@@ -1,10 +1,6 @@
 
 name: 'Build for Arch Linux'
 description: 'Build for Arch Linux'
-inputs:
-
-outputs:
-
 runs:
   using: 'docker'
   image: 'Dockerfile'
