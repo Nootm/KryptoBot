@@ -23,6 +23,7 @@ KryptoBot 是用於 TradingView 和 Bybit 的交易機器人，就像 [WunderTra
 ## 在這些系統下通過測試
 - Alpine Linux 3.16.2, x86_64, headless
 - Arch Linux Latest, x86_64, Sway
+目前只提供統一保證金模式的支持。在 “Actions” 有提供對於 Arch Linux 最新版和 Ubuntu 22.04 的構建。
 
 ## 使用 GUI 模式
 還沒翻譯完。請參考[簡體中文翻譯](https://github.com/Nootm/KryptoBot/blob/main/README_zh_Hans.md)。
