@@ -25,7 +25,7 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 - Alpine Linux 3.16.2, x86_64, headless
 - Arch Linux Latest, x86_64, Sway
 
-There are some dependancy issues with the binary built by GitHub Actions, so you can use Ubuntu 22.04 to test (the version GitHub uses). Only unified margin (v3) is supported for now.
+Builds targeting Arch Linux (latest) and Ubuntu (22.04) are provided in "Actions". Only unified margin (v3) is supported for now.
 
 ## Using GUI mode
 - After you chose an endpoint and confirmed, put the API key and secret provided by Bybit into the first two boxes and click on check.
