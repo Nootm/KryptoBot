@@ -16,7 +16,7 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 
 ## Features
 - Fully self-hosted. Auditable binaries produced by GitHub Actions.
-- Easy to set up with either an existing email account (webhook mode) or a public IP address (mailbox mode).
+- Easy to set up with either an existing email account (mailbox mode) or a public IP address (webhook mode).
 - Don't rely on 3rd party services, only connections with Bybit and the specified SMTP server (if you use mailbox mode) would be made.
 - GUI mode and headless mode provided.
 - I don't have a Windows rig to test, so please run it on VPS or [a virtual machine with Linux](https://itsfoss.com/install-linux-in-virtualbox/) if you use Windows. It will also protect your strategy from potential malwares. I use BuyVM, and recommand it as long as you use crypto to pay. However, if someone is willing to build and test it for Windows with GitHub Action, you can open an issue and I will put the link here.
@@ -41,7 +41,7 @@ Signals are parts from the message sent by TradingView. It should only contain a
 
 KryptoBot will always wait for the previous order to be completely filled before executing the next. It's recommanded to always send one message at a time, and put all the signals inside this message.
 
-For setting up TradingView, you may check this article from WunderTrading first: https://help.wundertrading.com/en/articles/5173846-tradingview-strategy-alert-automation. The main difference is, for mailbox mode you need to select "Send email-to-SMS" in "more options" instead of Webhook URL, and for webhook mode you would fill in the url box with your own server address.
+For setting up TradingView, you may check this article from WunderTrading first: https://help.wundertrading.com/en/articles/5173846-tradingview-strategy-alert-automation. The main difference is, for mailbox mode you need to select "Send email-to-SMS" in "more options" instead of Webhook URL, and for webhook mode you would fill in the url box with your own server address, in the form of ```http(s)://(your domain or ip address)/kryptobot```.
 
 Here's an example in headless mode using webhook mode:
 ```json
