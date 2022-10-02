@@ -963,6 +963,8 @@ float get_position(string symbol) {
 	Json::Reader reader;
 	Json::Value output;
 	reader.parse(response, output);
+	if (!output["result"]["list"].size())
+		return 0.0;
 	return stof(output["result"]["list"][0]["size"].asString());
 }
 
