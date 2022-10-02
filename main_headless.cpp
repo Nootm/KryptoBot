@@ -588,6 +588,7 @@ void tv_ip_init() {
 	tv_ip.insert("34.212.75.30");
 	tv_ip.insert("54.218.53.128");
 	tv_ip.insert("52.32.178.7");
+	tv_ip.insert("127.0.0.1");
 }
 crow::SimpleApp app;
 void start_webhook() {
