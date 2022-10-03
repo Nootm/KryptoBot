@@ -1,0 +1,5 @@
+name: 'Build for Alpine Linux'
+description: 'Build for Alpine Linux'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
