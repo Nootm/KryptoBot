@@ -1,0 +1,27 @@
+name: Alpine Linux
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: build
+        uses: ./alpine-linux-docker-action/
+      - name: Archive gui binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: kryptobot_gui
+          path: main.out
+          
+      - name: Archive headless binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: kryptobot_headless
+          path: headless.out
