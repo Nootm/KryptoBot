@@ -23,9 +23,20 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 
 ## Tested on
 - Alpine Linux 3.16.2, x86_64, headless
-- Arch Linux Latest, x86_64, Sway
+- Arch Linux Latest [(t2linux)](https://wiki.t2linux.org/), x86_64, Sway
 
-Builds targeting Arch Linux (latest) and Ubuntu (22.04) are provided in "Actions". Only unified margin (v3) is supported for now.
+Builds targeting Alpine Linux (3.16.2), Arch Linux (latest) and Ubuntu (22.04 LTS) are provided in Releases. Only unified margin (v3) is supported for now.
+
+Installing dependancies:
+```
+Alpine:
+apk add websocket++ curl jsoncpp openssl boost
+apk add glfw-wayland (for GUI)
+
+Arch:
+pacman -S base-devel git boost
+pacman -S glfw-wayland (for GUI)
+```
 
 ## Using GUI mode
 - After you chose an endpoint and confirmed, put the API key and secret provided by Bybit into the first two boxes and click on check.
