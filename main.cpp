@@ -1008,7 +1008,7 @@ void market_order(string sym, string side, float qty, const bool reduce_only) {
 
 void exec_trades(string rsignal) {
 	tradeitem tradei;
-	float posi;
+	float posi = 0.0;
 	string tsignal = "";
 	for (char c : rsignal)
 		if (isalpha(c) || isdigit(c) || c == '_')
@@ -1016,26 +1016,29 @@ void exec_trades(string rsignal) {
 	while (!tsignal.empty() && tsignal.find('_') != string::npos) {
 		tsignal = tsignal.substr(tsignal.find('_') + 1);
 		tradei = td[tsignal.substr(0, tsignal.find('_'))];
-		my_log.AddLog(("[INFO] " + tradei.typ + "\n").c_str());
 		if (tradei.typ == "REMOVED")
 			continue;
 		if (tradei.typ == "Swing buy using same quantity") {
 			posi = get_position(tradei.symbol);
-			market_order(tradei.symbol, "Buy", posi, true);
-			market_order(tradei.symbol, "Buy", posi, false);
+			if (posi < 0.0) {
+				market_order(tradei.symbol, "Buy", -posi, true);
+				market_order(tradei.symbol, "Buy", -posi, false);
+			}
 		} else if (tradei.typ == "Swing sell using same quantity") {
 			posi = get_position(tradei.symbol);
-			market_order(tradei.symbol, "Sell", posi, true);
-			market_order(tradei.symbol, "Sell", posi, false);
+			if (posi > 0.0) {
+				market_order(tradei.symbol, "Sell", posi, true);
+				market_order(tradei.symbol, "Sell", posi, false);
+			}
 		} else if (tradei.typ == "Buy using specified quantity")
 			market_order(tradei.symbol, "Buy", tradei.param, false);
 		else if (tradei.typ == "Sell using specified quantity")
 			market_order(tradei.symbol, "Sell", tradei.param, false);
-		else if (tradei.typ == "Close all positions")
-			market_order(tradei.symbol,
-						 get_side(tradei.symbol) == "Sell" ? "Buy" : "Sell",
-						 get_position(tradei.symbol), true);
-		else if (tradei.typ == "Buy using specified quantity, reduce only")
+		else if (tradei.typ == "Close all positions") {
+			posi = get_position(tradei.symbol);
+			market_order(tradei.symbol, posi > 0 ? "Sell" : "Buy", abs(posi),
+						 true);
+		} else if (tradei.typ == "Buy using specified quantity, reduce only")
 			market_order(tradei.symbol, "Buy", tradei.param, true);
 		else if (tradei.typ == "Sell using specified quantity, reduce only")
 			market_order(tradei.symbol, "Sell", tradei.param, true);
