@@ -31,7 +31,7 @@ Installing dependancies:
 ```
 Alpine:
 apk add websocket++ curl jsoncpp openssl boost
-apk add glfw-wayland (for GUI)
+apk add glfw (for GUI)
 
 Arch:
 pacman -S base-devel git boost
