@@ -2,7 +2,7 @@
 
 apk update
 apk upgrade
-apk add build-base clang llvm llvm13-dev websocket++ curl-dev jsoncpp-dev openssl-dev boost-dev glfw-wayland-dev pkgconfig make git wget
+apk add build-base clang llvm llvm13-dev websocket++ curl-dev jsoncpp-dev openssl-dev boost-dev glfw-dev pkgconfig make git wget
 wget https://github.com/CrowCpp/Crow/releases/download/v1.0%2B5/crow_all.h
 mv ./crow_all.h /usr/include/crow.h
 git clone https://github.com/Nootm/KryptoBot.git
