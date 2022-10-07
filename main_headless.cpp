@@ -17,6 +17,7 @@
 #include <cstring>
 #include <curl/curl.h>
 #include <deque>
+#include <fstream>
 #include <iostream>
 #include <json/json.h>
 #include <list>
@@ -102,6 +103,7 @@ unordered_set<int> uidset;
 unordered_set<string> tv_ip;
 string chk_res;
 bool ws_ready = false;
+ofstream flog;
 
 string get_signature(string input) {
 	array<unsigned char, EVP_MAX_MD_SIZE> hash;
@@ -137,7 +139,7 @@ void on_message(Client *client, ConnectionHdl hdl,
 	if (output.isMember("topic") && output["topic"].asString() == prefixo) {
 		if (output["data"]["result"][0]["orderStatus"].asString() == "Filled") {
 			current_order_filled = true;
-			clog << "[INFO] Order filled" << endl;
+			flog << "[INFO] Order filled" << endl;
 		}
 	}
 }
@@ -420,7 +422,7 @@ void check_key() {
 		set_open_handler(client_priv, &connection_priv);
 		set_message_handler(client_priv);
 		set_url(client_priv, wss_endpoint + "/unified/private/v3");
-		clog << "[INFO] Established a connection to private websocket endpoint"
+		flog << "[INFO] Established a connection to private websocket endpoint"
 			 << endl;
 		threads.emplace_back(&Client::run, &client_priv);
 		th_priv = threads.size() - 1;
@@ -631,6 +633,7 @@ int main() {
 	ifstream conf_file("config.json");
 	conf_file >> conf;
 	conf_file.close();
+	flog.open("krypto_bot.log");
 	bybit_key = conf["key"].asString();
 	bybit_secret = conf["secret"].asString();
 	bybit_endpoint = conf["http_url"].asString();
@@ -644,7 +647,7 @@ int main() {
 	set_open_handler(client, &connection);
 	set_message_handler(client);
 	set_url(client, wss_endpoint + "/contract/usdt/public/v3");
-	clog << "[INFO] Established a connection to public websocket endpoint"
+	flog << "[INFO] Established a connection to public websocket endpoint"
 		 << endl;
 	static websocketpp::lib::thread t1(&Client::run, &client);
 	static thread t2(&keepalive);
@@ -671,8 +674,10 @@ int main() {
 		webhook_listening = true;
 		threads.emplace_back(start_webhook);
 	}
-	getchar();
-	cout << "Exiting..." << endl;
+	while (getchar() != 'x' && !done)
+		;
+	flog << "Exiting..." << endl;
+	flog.close();
 	done = true;
 	if (webhook_listening)
 		app.port(webhook_port).multithreaded().stop();
