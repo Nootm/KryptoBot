@@ -20,6 +20,7 @@ Trading bot to be used with TradingView and Bybit, like [WunderTrading](https://
 - Don't rely on 3rd party services, only connections with Bybit and the specified SMTP server (if you use mailbox mode) would be made.
 - GUI mode and headless mode provided.
 - I don't have a Windows rig to test, so please run it on VPS or [a virtual machine with Linux](https://itsfoss.com/install-linux-in-virtualbox/) if you use Windows. It will also protect your strategy from potential malwares. I use BuyVM, and recommand it as long as you use crypto to pay. However, if someone is willing to build and test it for Windows with GitHub Action, you can open an issue and I will put the link here.
+- Note that KryptoBot doesn't reconnect automatically if the WebSocket connection brokes at this time. If you do experience the bad_connection error, please consider using a server closer to Bybit's servers (Singapore) or use something like supervisor to auto restart it.
 
 ## Tested on
 - Alpine Linux 3.16.2, x86_64, headless
